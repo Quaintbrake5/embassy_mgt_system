@@ -65,7 +65,7 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 | `prisma.config.ts` | Prisma CLI config |
 | `src/config/db.config.ts` | PrismaClient singleton with pg adapter |
 | `src/server.ts` | Entry point (empty — needs Express setup) |
-| `.env` | `DATABASE_URL=postgresql://postgres:pass@localhost:5433/cloud_aptech` |
+| `.env` | `DATABASE_URL=postgresql://postgres:pass@localhost:5433/embassy_mgt_system` |
 
 ## Commands Reference
 ```bash
@@ -87,3 +87,22 @@ npx tsc --noEmit
 # Dev server (needs nodemon/ts-node)
 npx ts-node src/server.ts
 ```
+
+---
+
+## 🔄 SESSION CONTEXT (for continuation)
+
+### What was done this session
+- Analyzed codebase structure and existing files
+- Created `CLAUDE.md` with project guidance for future Claude instances
+- Discovered existing `HANDOFF.md` with detailed project state
+- Verified Prisma schema is complete and client generated
+
+### Immediate next action
+**Run the initial migration** to create the database:
+```bash
+npx prisma migrate dev --schema=prisma/schema.prisma --name init (Migrations have already been made; skip this for now)
+```
+
+### Then
+Implement `src/server.ts` with basic Express 5 setup (cors, json parser, health check route, listen on port 3010).
