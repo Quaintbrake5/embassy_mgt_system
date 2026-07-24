@@ -1,0 +1,515 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  // OTHER
+}
+
+enum VisaType {
+  TOURIST
+  BUSINESS
+  WORK
+  STUDENT
+  DIPLOMATIC
+  TRANSIT
+  MEDIA
+  MEDICAL
+  FAMILY_REUNION
+}
+
+enum VisaStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  MORE_INFO_REQUESTED
+  APPROVED
+  REJECTED
+  ESCALATED
+  ISSUED
+}
+
+enum AppointmentStatus {
+  AVAILABLE
+  BOOKED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ServiceCategory {
+  PASSPORT
+  CIVIL_REGISTRY
+  EMERGENCY_ASSISTANCE
+  DOCUMENT_LEGALIZATION
+  VISA
+  NOTARIAL
+  CONSULAR_REPORT
+}
+
+enum RequestStatus {
+  DRAFT
+  SUBMITTED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+  CANCELLED
+}
+
+enum DocumentType {
+  PASSPORT
+  BIOMETRIC
+  PHOTOGRAPH
+  NATIONAL_ID
+  BIRTH_CERTIFICATE
+  MARRIAGE_CERTIFICATE
+  DEATH_CERTIFICATE
+  TRAVEL_INSURANCE
+  INVITATION_LETTER
+  SUPPORTING_DOCUMENT
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum DecisionType {
+  APPROVE
+  REJECT
+  REQUEST_MORE_INFO
+  ESCALATE_TO_HQ
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CheckStatus {
+  PENDING
+  IN_PROGRESS
+  CLEARED
+  FLAGGED
+  ERROR
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum PouchStatus {
+  CREATED
+  IN_TRANSIT
+  RECEIVED
+  CLOSED
+  LOST
+}
+
+enum ClearanceLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+model User {
+  userid        String        @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String        @unique
+  phone         String?       @unique
+  passwordHash  String
+  roleId        String?
+  emailVerified Boolean
+  lastLoginAt   DateTime?
+  status        UserStatus    @default(PENDING)
+  createdAt     DateTime      @default(now())
+  Updated       DateTime      @updatedAt
+  audit         AuditLog[]
+  profile       Profile?
+  token         RefreshToken?
+  role          Role?         @relation(fields: [roleId], references: [id])
+  appointments  Appointment[]
+  serviceRequests ServiceRequest[]
+  visaApplications VisaApplication[]
+  payments      Payment[]
+  emergencyCases EmergencyCase[]
+  staffClearance StaffClearance?
+  clearancesIssued StaffClearance[] @relation("ClearanceIssuer")
+  decisions     VisaDecision[] @relation("OfficerDecisions")
+  secondaryDecisions VisaDecision[] @relation("SecondaryOfficerDecisions")
+  verifications VerificationCheck[]
+  watchlistEntries WatchlistEntry[]
+
+  @@index([roleId])
+  @@index([status])
+}
+
+model Role {
+  id              String           @id @default(uuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  createdAt       DateTime         @default(now())
+  Updated         DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  user            User[]
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  createdAt       DateTime         @default(now())
+  Updated         DateTime         @updatedAt
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+  Updated      DateTime   @updatedAt
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model Profile {
+  id          String    @id @default(uuid())
+  gender      Gender
+  dateOfBirth DateTime?
+  avatar      String?
+  bio         String?
+  city        String?
+  state       String?
+  country     String?
+  postalCode  String?
+  user        User      @relation(fields: [id], references: [userid], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String    @unique
+  ipAddress String?
+  userAgent String?
+  isRevoked Boolean   @default(false)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [userid], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String
+  description String?
+  metaData    Json?
+  changes     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [userid])
+
+  @@index([userId])
+  @@index([entity])
+}
+
+model Embassy {
+  id                  String            @id @default(uuid())
+  name                String
+  code                String            @unique
+  country             String
+  city                String
+  address             String
+  phone               String?
+  email               String?
+  operatingHours      String?
+  createdAt           DateTime          @default(now())
+  Updated             DateTime          @updatedAt
+  departments         Department[]
+  serviceRequests     ServiceRequest[]
+  appointments        Appointment[]
+  visaApplications    VisaApplication[]
+  emergencyCases      EmergencyCase[]
+  originPouches       DiplomaticPouch[] @relation("OriginEmbassy")
+  destinationPouches  DiplomaticPouch[] @relation("DestinationEmbassy")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  embassyId   String
+  createdAt   DateTime @default(now())
+  Updated     DateTime @updatedAt
+  embassy     Embassy  @relation(fields: [embassyId], references: [id], onDelete: Cascade)
+
+  @@index([embassyId])
+}
+
+model ServiceType {
+  id                  String          @id @default(uuid())
+  name                String
+  slug                String          @unique
+  category            ServiceCategory
+  description         String?
+  fee                 Decimal?
+  duration            Int?
+  requiresAppointment Boolean
+  createdAt           DateTime        @default(now())
+  Updated             DateTime        @updatedAt
+  serviceRequests     ServiceRequest[]
+}
+
+model ServiceRequest {
+  id              String          @id @default(uuid())
+  referenceNumber String          @unique
+  userId          String
+  serviceTypeId   String
+  embassyId       String
+  status          RequestStatus   @default(DRAFT)
+  details         Json?
+  submittedAt     DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  Updated         DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [userid])
+  serviceType     ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  embassy         Embassy         @relation(fields: [embassyId], references: [id])
+  appointments    Appointment[]
+  payments        Payment[]
+  documents       VisaDocument[]
+
+  @@index([userId])
+  @@index([serviceTypeId])
+  @@index([embassyId])
+  @@index([status])
+}
+
+model VisaApplication {
+  id                String              @id @default(uuid())
+  applicationNumber String              @unique
+  userId            String
+  visaType          VisaType
+  embassyId         String
+  status            VisaStatus          @default(DRAFT)
+  submittedAt       DateTime            @default(now())
+  decisionAt        DateTime?
+  createdAt         DateTime            @default(now())
+  Updated           DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [userid])
+  embassy           Embassy             @relation(fields: [embassyId], references: [id])
+  documents         VisaDocument[]
+  decision          VisaDecision?
+  payments          Payment[]
+  verificationChecks VerificationCheck[]
+
+  @@index([userId])
+  @@index([embassyId])
+  @@index([status])
+}
+
+model VisaDocument {
+  id                String          @id @default(uuid())
+  visaApplicationId String?
+  serviceRequestId  String?
+  documentType      DocumentType
+  fileName          String
+  fileHash          String?
+  fileUrl           String?
+  uploadedAt        DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  visaApplication   VisaApplication? @relation(fields: [visaApplicationId], references: [id])
+  serviceRequest    ServiceRequest?  @relation(fields: [serviceRequestId], references: [id])
+
+  @@index([visaApplicationId])
+  @@index([serviceRequestId])
+}
+
+model VisaDecision {
+  id                  String          @id @default(uuid())
+  visaApplicationId   String          @unique
+  officerId           String
+  secondaryOfficerId  String?
+  decision            DecisionType
+  remarks             String?
+  rationale           String?
+  decidedAt           DateTime        @default(now())
+  createdAt           DateTime        @default(now())
+  Updated             DateTime        @updatedAt
+  visaApplication     VisaApplication @relation(fields: [visaApplicationId], references: [id])
+  officer             User            @relation("OfficerDecisions", fields: [officerId], references: [userid])
+  secondaryOfficer    User?           @relation("SecondaryOfficerDecisions", fields: [secondaryOfficerId], references: [userid])
+
+  @@index([officerId])
+}
+
+model Appointment {
+  id              String             @id @default(uuid())
+  serviceRequestId String
+  userId          String
+  embassyId       String
+  slotDate        DateTime
+  slotTime        String
+  status          AppointmentStatus  @default(AVAILABLE)
+  qrCode          String?
+  checkInAt       DateTime?
+  tokenNumber     String?
+  createdAt       DateTime           @default(now())
+  Updated         DateTime           @updatedAt
+  serviceRequest  ServiceRequest     @relation(fields: [serviceRequestId], references: [id])
+  user            User               @relation(fields: [userId], references: [userid])
+  embassy         Embassy            @relation(fields: [embassyId], references: [id])
+
+  @@index([serviceRequestId])
+  @@index([userId])
+  @@index([embassyId])
+  @@index([status])
+}
+
+model Payment {
+  id                String           @id @default(uuid())
+  serviceRequestId  String?
+  visaApplicationId String?
+  userId            String
+  amount            Decimal
+  currency          String
+  status            PaymentStatus   @default(PENDING)
+  paymentMethod     String?
+  transactionId     String?
+  paidAt            DateTime?
+  createdAt         DateTime         @default(now())
+  serviceRequest    ServiceRequest?  @relation(fields: [serviceRequestId], references: [id])
+  visaApplication   VisaApplication? @relation(fields: [visaApplicationId], references: [id])
+  user              User             @relation(fields: [userId], references: [userid])
+
+  @@index([userId])
+  @@index([serviceRequestId])
+  @@index([visaApplicationId])
+}
+
+model VerificationCheck {
+  id                String          @id @default(uuid())
+  visaApplicationId String
+  checkType         String
+  result            Json?
+  status            CheckStatus     @default(PENDING)
+  checkedBy         String?
+  checkedAt         DateTime?
+  createdAt         DateTime        @default(now())
+  visaApplication   VisaApplication @relation(fields: [visaApplicationId], references: [id])
+  checkedByUser     User?           @relation(fields: [checkedBy], references: [userid])
+
+  @@index([visaApplicationId])
+  @@index([checkedBy])
+}
+
+model WatchlistEntry {
+  id             String       @id @default(uuid())
+  fullName       String
+  documentNumber String?
+  nationality    String?
+  reason         String
+  riskLevel      UrgencyLevel @default(MEDIUM)
+  listedAt       DateTime     @default(now())
+  listedBy       String
+  expiresAt      DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  Updated        DateTime     @updatedAt
+  listedByUser   User         @relation(fields: [listedBy], references: [userid])
+
+  @@index([listedBy])
+}
+
+model EmergencyCase {
+  id              String      @id @default(uuid())
+  referenceNumber String      @unique
+  userId          String
+  embassyId       String
+  urgency         UrgencyLevel @default(MEDIUM)
+  caseType        String
+  description     String?
+  status          CaseStatus  @default(OPEN)
+  resolvedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  Updated         DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [userid])
+  embassy         Embassy     @relation(fields: [embassyId], references: [id])
+
+  @@index([userId])
+  @@index([embassyId])
+  @@index([status])
+}
+
+model DiplomaticPouch {
+  id                  String      @id @default(uuid())
+  pouchNumber         String      @unique
+  originEmbassyId     String
+  destinationEmbassyId String
+  status              PouchStatus @default(CREATED)
+  dispatchDate        DateTime?
+  receivedDate        DateTime?
+  chainOfCustody      Json?
+  createdAt           DateTime    @default(now())
+  Updated             DateTime    @updatedAt
+  originEmbassy       Embassy     @relation("OriginEmbassy", fields: [originEmbassyId], references: [id])
+  destinationEmbassy  Embassy     @relation("DestinationEmbassy", fields: [destinationEmbassyId], references: [id])
+
+  @@index([originEmbassyId])
+  @@index([destinationEmbassyId])
+}
+
+model StaffClearance {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  clearanceLevel  ClearanceLevel
+  issuedBy        String
+  issuedAt        DateTime       @default(now())
+  expiresAt       DateTime?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  Updated         DateTime       @updatedAt
+  user            User           @relation(fields: [userId], references: [userid], onDelete: Cascade)
+  issuer          User           @relation("ClearanceIssuer", fields: [issuedBy], references: [userid])
+
+  @@index([issuedBy])
+}

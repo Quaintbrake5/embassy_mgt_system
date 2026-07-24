@@ -1,0 +1,90 @@
+Develop a NodeJS Backend (Express with TS) for an Embassy Management System. It'll ensure the following work:
+    Setup (with Prisma ORM)
+    Schema (connect to postgresql)
+    Migrations 
+    Prisma Client (I meant Prisma Studio)
+
+Follow the pattern in the root folder (Cloud Computing folder)
+
+
+Here is some info about an Embassy Management System:
+An **Embassy Management System (EMS)** is a mission-critical platform designed to digitize and orchestrate consular operations,
+ visa processing, citizen services, appointment scheduling, and diplomatic administration.
+
+Because embassy platforms handle highly sensitive personally identifiable information (PII) and cros
+ the system requires strict data isolation, zero-trust security, and immutable audit logs.
+
+Here is a high-level system architecture and feature breakdown for an enterprise-grade Embassy Management System.
+    (For future development)
+
+---
+
+## 1. Core Domain Modules
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Embassy Management System                        │
+├───────────────┬────────────────┬───────────────┬────────────────────────┤
+│ Citizen Portal│ Visa Processing│ Appointments  │ Diplomatic Admin & Ops │
+└───────┬───────┴───────┬────────┴───────┬───────┴───────────┬────────────┘
+        │               │                │                   │
+┌───────▼───────────────▼────────────────▼───────────────────▼────────────┐
+│              Security, Compliance & Immutable Audit Layer               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+```
+
+### A. Consular & Citizen Services (Citizens Abroad)
+
+* **Passport & Travel Document Services:** Renewals, lost/stolen reporting, emergency travel certificates (ETC).
+* **Civil Registry:** Birth, marriage, and death registrations occurring in the host country.
+* **Emergency Assistance:** Crisis tracking, evacuation registries, and real-time welfare checks during local emergencies.
+* **Document Legalization & Attestation:** Apostille processing, official document verification, and digital seal stamping.
+
+### B. Visa & Immigration Engine
+
+* **Application Ingestion:** Form processing (e-Visas, tourist, work, student, diplomatic visas).
+* **Document & Biometric Storage:** Vault for passport scans, photos, fingerprints, and facial recognition data.
+* **Verification & Vetting Workflows:** Integration with national security, Interpol, and internal watchlists for automated screening.
+* **Decision Engine:** Configurable workflow for consular officers (Approve, Reject, Request More Info, Escalate to HQ).
+
+### C. Appointment & Queue Management
+
+* **Dynamic Slot Booking:** Real-time capacity management based on staff availability and service type.
+* **Fraud & Anti-Bot Prevention:** OTP/biometric identity verification prior to booking to prevent slot scalping.
+* **On-Site Queue Handling:** QR-code check-in kiosks, digital display token routing, and real-time window assignment.
+
+### D. Diplomatic Administration & Logistics
+
+* **Diplomatic Pouch & Cargo Tracking:** Chain-of-custody tracking for classified mail and official inventory.
+* **Staff & Security Clearance:** Deployment tracking, diplomatic immunity records, and access level management.
+* **Consular Revenue & Financial Ledger:** Fee collection, multi-currency processing, and daily reconciliation reports for HQ.
+
+---
+
+## 2. Recommended Technology Stack & Data Architecture
+
+| Layer | Recommended Tech / Approach | Key Rationale |
+| --- | --- | --- |
+| **API / Backend** | Python (FastAPI / Django) or Go | High-throughput async processing, strict typing, and seamless microservice isolation. |
+| **Relational DB** | PostgreSQL | Transactional integrity (ACID) for visas, appointments, and financial records. |
+| **Document / Vault** | MinIO / AWS S3 + HashiCorp Vault | Encrypted blob storage for biometric scans and documents, paired with key isolation. |
+| **Background Jobs** | Celery / RabbitMQ / Redis | Async vetting tasks, email/SMS notification queues, and document rendering pipelines. |
+| **Security / Auth** | OAuth2 + OIDC with Mandatory MFA & RBAC | Strict Role-Based Access Control (e.g., *Consular Officer*, *Adjudicator*, *Admin*, *Citizen*). |
+
+---
+
+## 3. Security & Compliance Imperatives
+
+> **Crucial Requirement:** Embassy systems operate under strict sovereign data mandates. Data processed within consular workflows often must conform to both home country data privacy laws and international diplomatic conventions (e.g., Vienna Convention on Consular Relations).
+
+1. **Field-Level PII Encryption:** Sensitive fields (national ID numbers, passport details, biometrics) should be encrypted at rest using envelope encryption (`AES-256-GCM`).
+2. **Immutable Audit Logging:** Every document view, status modification, and print job must generate an append-only log entry containing `Timestamp`, `Officer ID`, `IP/Device Hash`, and `Action`.
+3. **Role-Based Workflows (Dual-Control / Four-Eyes Principle):** High-stakes decisions (such as granting diplomatic visas or issuing emergency passports) should require secondary officer approval before final issuance.
+
+---
+
+---
+
+N/B: A slug is a short, unique reference code (typically 8 characters) used to identify a specific resource like an entry,
+    application, user, or field. 
