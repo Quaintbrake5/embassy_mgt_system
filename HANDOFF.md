@@ -22,7 +22,7 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 ### ⏳ Next Steps (Priority Order)
 1. **Run initial migration**
    ```bash
-   npx prisma migrate dev --schema=prisma/schema.prisma --name init
+   npx prisma migrate dev --schema=prisma/schema.prisma --name init (Migrations have already been made; skip this for now)
    ```
 
 2. **Implement Express server** (`src/server.ts`) — currently empty
