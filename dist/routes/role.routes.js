@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const role_controller_1 = require("../controllers/role.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const validation_middleware_1 = require("../middleware/validation.middleware");
+const role_dto_1 = require("../dto/role.dto");
+const role_service_1 = require("../services/role.service");
+const db_config_1 = require("../config/db.config");
+const roleService = new role_service_1.RoleService(db_config_1.prisma);
+const roleController = new role_controller_1.RoleController(roleService);
+const router = (0, express_1.Router)();
+// All routes require authentication
+router.use(auth_middleware_1.authMiddleware);
+router.post('/', (0, validation_middleware_1.validate)(role_dto_1.CreateRoleDto), roleController.create);
+router.get('/', roleController.findAll);
+router.get('/:id', roleController.findById);
+router.put('/:id', (0, validation_middleware_1.validate)(role_dto_1.UpdateRoleDto), roleController.update);
+router.delete('/:id', roleController.delete);
+router.post('/:id/permissions', (0, validation_middleware_1.validate)(role_dto_1.AssignPermissionsDto), roleController.assignPermissions);
+exports.default = router;
