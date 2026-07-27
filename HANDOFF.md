@@ -3,7 +3,7 @@
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -55,7 +55,7 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 - **Vetting Service**: Automated watchlist matching (case-insensitive name contains, document number, nationality), VerificationCheck creation with FLAGGED/CLEARED status, risk scoring based on highest UrgencyLevel (LOW→MEDIUM→HIGH→CRITICAL), officer manual check status updates
 - **Appointment Service**: Slot availability (09:00-17:00, 30min intervals), booking with OTP verification (6-digit, 5min expiry), QR code generation (UUID-based), queue management (check-in, call-next, complete, no-show), wait estimates, rate-limited OTP (max 3/hr), all state transitions audited
 - **Appointment Routes**: `GET /appointments/slots`, `POST /appointments/book`, `GET /appointments/my`, `PUT /appointments/:id/cancel`, `POST /appointments/:id/checkin`, `GET /appointments/queue`, `POST /appointments/queue/next`, `PUT /appointments/:id/complete`, `PUT /appointments/:id/no-show`
-- **OTP Service**: 6-digit OTP generation, 5-minute expiry, in-memory store with rate limiting (max 3 generations per appointment per hour)
+- **OTP Service**: 6-digit OTP generation via `crypto.randomInt`, 5-minute expiry, in-memory store with rate limiting (max 3 generations per appointment per hour, max 5 verify attempts per 15min per appointmentId)
 - **Seed Data**: 8 new permissions added (visa-decision:create, visa-decision:read, vetting:create, vetting:read, appointment:manage), assigned to admin/officer/consular_staff/viewer roles
 
 ## Project Structure
@@ -215,6 +215,22 @@ src/
 | Tests (audit service) | ✅ 6 tests (log, findAll, filtering, findById, export) |
 | Tests (API) | ✅ 1 test (health, root, 404) |
 | Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 38 permissions, 4 roles, admin user |
+
+## Phase 3 Code Review Fixes Applied (July 2026)
+
+All 9 high-confidence findings addressed, zero regressions:
+
+| File | Issue | Fix |
+|------|-------|-----|
+| `src/services/otp.service.ts` | `Math.random()` for OTP generation | `crypto.randomInt(100000, 999999)` |
+| `src/services/otp.service.ts` | `verifyOtp()` had no rate limiting | Added `verifyRateLimitStore` (5 attempts / 15min window) |
+| `src/services/appointment.service.ts` | OTP leaked into audit log metadata | Removed `otp` from `metaData.newValues` |
+| `src/services/appointment.service.ts` | TOCTOU race condition on slot booking | Wrapped availability check + create in `$transaction` |
+| `src/services/appointment.service.ts` | `getQueue()` had no pagination | Added `page`/`limit` params, returns `PaginatedAppointmentsDto` |
+| `src/services/visa-decision.service.ts` | Decision create + status update not atomic | Wrapped both in `$transaction` |
+| `src/services/visa-decision.service.ts` | Duplicate `secondaryOfficerId` existence query | Removed redundant query block |
+| `src/services/vetting.service.ts` | N+1 watchlist creates (sequential loop) | `Promise.all` for parallel creates |
+| `src/dto/otp.dto.ts` | Orphaned dead code (0 imports) | Deleted |
 
 ## Key Files Reference
 
