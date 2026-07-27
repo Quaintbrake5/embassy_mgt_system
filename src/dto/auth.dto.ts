@@ -159,6 +159,68 @@ export class ChangePasswordDto {
   }
 }
 
+export class ForgotPasswordDto {
+  email!: string;
+
+  static validate(data: any): string[] {
+    const errors: string[] = [];
+
+    if (!data.email || typeof data.email !== 'string') {
+      errors.push('Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errors.push('Invalid email format');
+    } else if (data.email.length > 255) {
+      errors.push('Email must not exceed 255 characters');
+    }
+
+    return errors;
+  }
+
+  static sanitize(data: any): ForgotPasswordDto {
+    const dto = new ForgotPasswordDto();
+    dto.email = data.email?.trim().toLowerCase();
+    return dto;
+  }
+}
+
+export class ResetPasswordDto {
+  token!: string;
+  newPassword!: string;
+
+  static validate(data: any): string[] {
+    const errors: string[] = [];
+
+    if (!data.token || typeof data.token !== 'string') {
+      errors.push('Reset token is required');
+    }
+
+    if (!data.newPassword || typeof data.newPassword !== 'string') {
+      errors.push('New password is required');
+    } else if (data.newPassword.length < 8) {
+      errors.push('New password must be at least 8 characters');
+    } else if (data.newPassword.length > 128) {
+      errors.push('New password must not exceed 128 characters');
+    } else {
+      const hasUpper = /[A-Z]/.test(data.newPassword);
+      const hasLower = /[a-z]/.test(data.newPassword);
+      const hasNumber = /\d/.test(data.newPassword);
+      const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(data.newPassword);
+      if (!(hasUpper && hasLower && hasNumber && hasSymbol)) {
+        errors.push('New password must contain uppercase, lowercase, number, and special character');
+      }
+    }
+
+    return errors;
+  }
+
+  static sanitize(data: any): ResetPasswordDto {
+    const dto = new ResetPasswordDto();
+    dto.token = data.token?.trim();
+    dto.newPassword = data.newPassword;
+    return dto;
+  }
+}
+
 export class AuthResponseDto {
   accessToken!: string;
   refreshToken!: string;

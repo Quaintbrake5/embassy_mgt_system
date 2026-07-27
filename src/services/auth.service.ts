@@ -1,8 +1,18 @@
 import { PrismaClient } from '../generated/prisma/client';
-import { RegisterDto, LoginDto, ChangePasswordDto, AuthResponseDto } from '../dto/auth.dto';
+import { RegisterDto, LoginDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto, AuthResponseDto } from '../dto/auth.dto';
 import { AuthenticationError, ConflictError, NotFoundError, AuthorizationError } from '../exceptions';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.utilities';
 import { hashPassword, comparePassword } from '../utils/bcrypt.utilities';
+import { generateToken, hashToken } from '../utils/crypto.utilities';
+
+interface ResetTokenEntry {
+  userId: string;
+  expiresAt: Date;
+}
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+const MAX_RESET_TOKENS = 10000;
 
 export interface IAuthService {
   register(dto: RegisterDto): Promise<AuthResponseDto>;
@@ -10,13 +20,28 @@ export interface IAuthService {
   refresh(refreshToken: string): Promise<AuthResponseDto>;
   logout(userId: string): Promise<void>;
   changePassword(userId: string, dto: ChangePasswordDto): Promise<void>;
+  forgotPassword(email: string): Promise<{ message: string; token?: string }>;
+  resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
 }
 
 export class AuthService implements IAuthService {
   private prisma: PrismaClient;
+  private resetTokens: Map<string, ResetTokenEntry> = new Map();
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
+    this.cleanupTimer = setInterval(() => this.evictExpiredTokens(), CLEANUP_INTERVAL_MS);
+    this.cleanupTimer.unref();
+  }
+
+  private evictExpiredTokens(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.resetTokens) {
+      if (entry.expiresAt.getTime() <= now) {
+        this.resetTokens.delete(key);
+      }
+    }
   }
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
@@ -305,7 +330,7 @@ export class AuthService implements IAuthService {
     });
 
     // Create audit log
-    await this.prisma.auditLog.create({
+await this.prisma.auditLog.create({
       data: {
         userId,
         action: 'PASSWORD_CHANGE',
@@ -314,5 +339,84 @@ export class AuthService implements IAuthService {
         description: 'Password changed',
       },
     });
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string; token?: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user) {
+      return { message: 'If the email exists, a reset link has been sent' };
+    }
+
+    if (this.resetTokens.size >= MAX_RESET_TOKENS) {
+      const oldestKey = this.resetTokens.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.resetTokens.delete(oldestKey);
+      }
+    }
+
+    const token = generateToken(32);
+    this.resetTokens.set(token, {
+      userId: user.userid,
+      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.userid,
+        action: 'PASSWORD_RESET_REQUEST',
+        entity: 'User',
+        entityId: user.userid,
+        description: 'Password reset requested',
+      },
+    });
+
+    return {
+      message: 'If the email exists, a reset link has been sent',
+      token,
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const entry = this.resetTokens.get(token);
+    if (!entry || entry.expiresAt < new Date()) {
+      throw new AuthenticationError('Invalid or expired reset token');
+    }
+
+    this.resetTokens.delete(token);
+
+    const user = await this.prisma.user.findUnique({
+      where: { userid: entry.userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await this.prisma.user.update({
+      where: { userid: entry.userId },
+      data: { passwordHash },
+    });
+
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: entry.userId, isRevoked: false },
+      data: { isRevoked: true, revokedAt: new Date() },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: entry.userId,
+        action: 'PASSWORD_RESET',
+        entity: 'User',
+        entityId: entry.userId,
+        description: 'Password reset completed',
+      },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 }

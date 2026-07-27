@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db.config';
+import { verifyAccessToken } from '../utils/jwt.utilities';
 
 declare global {
   namespace Express {
@@ -49,8 +50,6 @@ export const authMiddleware = async (
       return;
     }
 
-    // Import jwt utilities dynamically to avoid circular dependency
-    const { verifyAccessToken } = await import('../utils/jwt.utilities');
     const payload = verifyAccessToken(token);
 
     // Check if user exists and is active
@@ -138,7 +137,6 @@ export const optionalAuthMiddleware = async (
       return;
     }
 
-    const { verifyAccessToken } = await import('../utils/jwt.utilities');
     const payload = verifyAccessToken(token);
 
     const user = await prisma.user.findUnique({

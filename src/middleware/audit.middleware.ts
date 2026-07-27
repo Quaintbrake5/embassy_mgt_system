@@ -1,38 +1,43 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db.config';
+import { AuditService } from '../services/audit.service';
 
-/**
- * Audit logging middleware
- * Automatically logs CREATE, UPDATE, DELETE operations
- */
+const auditService = new AuditService(prisma);
+
 export const auditMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Only audit mutating methods
   const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
   if (!mutatingMethods.includes(req.method)) {
     return next();
   }
 
-  // Skip audit for certain paths
   const skipPaths = ['/auth', '/health'];
   if (skipPaths.some(path => req.path.startsWith(path))) {
     return next();
   }
 
-  // Store original send method
+  const entity = extractEntityFromPath(req.path);
+  const entityId = extractEntityIdFromParams(req);
+  const action = extractActionFromMethod(req.method);
+
+  let oldValues: any = undefined;
+  if ((req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') && entityId && entityId !== 'unknown') {
+    try {
+      oldValues = await fetchOldValues(req, entity, entityId);
+    } catch {
+      // Best-effort old value capture
+    }
+  }
+
   const originalSend = res.send;
 
-  // Override send to capture response
   res.send = function (body?: any): Response {
-    // Only log on successful responses
     const isSuccess = res.statusCode >= 200 && res.statusCode < 400;
-    const isMutating = mutatingMethods.includes(req.method);
 
-    if (isSuccess && isMutating && req.user) {
-      // Parse response body
+    if (isSuccess && req.user) {
       let responseData;
       try {
         responseData = typeof body === 'string' ? JSON.parse(body) : body;
@@ -40,52 +45,43 @@ export const auditMiddleware = async (
         responseData = body;
       }
 
-      // Extract entity info from route
-      const entity = extractEntityFromPath(req.path);
-      const action = extractActionFromMethod(req.method);
+      const resolvedEntityId = extractEntityId(req, responseData) || entityId;
+      const metaData: any = {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        body: sanitizeBody(req.body),
+        correlationId: req.correlationId || res.locals.correlationId,
+      };
 
-      // Log asynchronously (don't block response)
-      logAudit({
+      auditService.log({
         userId: req.user.userId,
         action,
         entity,
-        entityId: extractEntityId(req, responseData),
+        entityId: resolvedEntityId,
         description: `${action} ${entity}`,
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
-        metaData: {
-          method: req.method,
-          path: req.path,
-          query: req.query,
-          body: sanitizeBody(req.body),
-        },
+        metaData,
+        oldValues,
+        newValues: action === 'DELETE' ? undefined : sanitizeBody(req.body),
       }).catch(console.error);
     }
 
-    // Call original send
     return originalSend.call(this, body);
   };
 
   next();
 };
 
-/**
- * Extract entity name from request path
- * e.g., /api/v1/users/123 -> User
- */
 function extractEntityFromPath(path: string): string {
   const segments = path.split('/').filter(Boolean);
   const apiIndex = segments.findIndex(s => s === 'api' || s === 'v1');
   const entitySegment = segments[apiIndex + 1] || 'Unknown';
-
-  // Convert to singular PascalCase
   const singular = entitySegment.replace(/s$/, '');
   return singular.charAt(0).toUpperCase() + singular.slice(1);
 }
 
-/**
- * Extract action from HTTP method
- */
 function extractActionFromMethod(method: string): string {
   switch (method) {
     case 'POST':
@@ -100,11 +96,7 @@ function extractActionFromMethod(method: string): string {
   }
 }
 
-/**
- * Extract entity ID from request/response
- */
-function extractEntityId(req: Request, responseData: any): string {
-  // From route params - handle Express param types
+function extractEntityIdFromParams(req: Request): string {
   const getParam = (name: string): string | undefined => {
     const val = req.params[name];
     return Array.isArray(val) ? val[0] : val;
@@ -115,16 +107,43 @@ function extractEntityId(req: Request, responseData: any): string {
   if (getParam('roleId')) return getParam('roleId')!;
   if (getParam('permissionId')) return getParam('permissionId')!;
 
-  // From response data
+  return 'unknown';
+}
+
+function extractEntityId(req: Request, responseData: any): string {
+  const fromParams = extractEntityIdFromParams(req);
+  if (fromParams !== 'unknown') return fromParams;
+
   if (responseData?.data?.userid) return responseData.data.userid;
   if (responseData?.data?.id) return responseData.data.id;
 
   return 'unknown';
 }
 
-/**
- * Sanitize request body for logging (remove sensitive fields)
- */
+async function fetchOldValues(req: Request, entity: string, entityId: string): Promise<any> {
+  const modelMap: Record<string, string> = {
+    User: 'user',
+    Role: 'role',
+    Permission: 'permission',
+  };
+
+  const modelName = modelMap[entity];
+  if (!modelName) return undefined;
+
+  const record = await (prisma as any)[modelName].findUnique({
+    where: { id: entityId },
+  });
+
+  if (!record) {
+    const altRecord = await (prisma as any)[modelName].findUnique({
+      where: { userid: entityId },
+    });
+    return altRecord ? sanitizeBody(altRecord) : undefined;
+  }
+
+  return sanitizeBody(record);
+}
+
 function sanitizeBody(body: any): any {
   if (!body || typeof body !== 'object') return body;
 
@@ -138,31 +157,4 @@ function sanitizeBody(body: any): any {
   }
 
   return sanitized;
-}
-
-/**
- * Log audit entry
- */
-async function logAudit(data: {
-  userId: string;
-  action: string;
-  entity: string;
-  entityId: string;
-  description: string;
-  ipAddress?: string;
-  userAgent?: string;
-  metaData?: any;
-}): Promise<void> {
-  await prisma.auditLog.create({
-    data: {
-      userId: data.userId,
-      action: data.action,
-      entity: data.entity,
-      entityId: data.entityId,
-      description: data.description,
-      ipAddress: data.ipAddress,
-      userAgent: data.userAgent,
-      metaData: data.metaData,
-    },
-  });
 }

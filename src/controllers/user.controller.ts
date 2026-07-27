@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service';
 import { CreateUserDto, UpdateUserDto } from '../dto/user.dto';
-import { ValidationError } from '../exceptions';
+import { ValidationError, NotFoundError } from '../exceptions';
 
 export class UserController {
   private userService: UserService;
@@ -119,6 +119,43 @@ export class UserController {
       res.json({
         success: true,
         data: profile,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const dto = req.body as UpdateUserDto;
+      const updated = await this.userService.updateProfile(userId, dto);
+      res.json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  assignRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { roleId } = req.body;
+
+      if (!roleId) {
+        throw new ValidationError('Role ID is required');
+      }
+
+      const updated = await this.userService.assignRole(id, roleId);
+      res.json({
+        success: true,
+        data: updated,
       });
     } catch (error) {
       next(error);

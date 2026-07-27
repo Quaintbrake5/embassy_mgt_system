@@ -16,12 +16,14 @@ router.use(authMiddleware);
 
 // Current user profile
 router.get('/me', userController.getProfile);
+router.put('/me', validate(UpdateUserDto), userController.updateProfile);
 
 // Admin routes
 router.post('/', validate(CreateUserDto), userController.create);
 router.get('/', userController.findAll);
 router.get('/:id', userController.findById);
 router.put('/:id', validate(UpdateUserDto), userController.update);
+router.put('/:id/role', userController.assignRole);
 router.delete('/:id', userController.delete);
 router.patch('/:id/status', userController.changeStatus);
 
