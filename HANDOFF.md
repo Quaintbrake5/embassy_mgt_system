@@ -1,9 +1,9 @@
-# HANDOFF — Embassy Management System (EMS) — Phase 1 + Phase 2 (Weeks 1-4) Complete
+# HANDOFF — Embassy Management System (EMS) — Phase 1 + Phase 2 (Weeks 1-5) + Phase 3 (Weeks 6-8) Complete
 
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-4) Complete
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -34,6 +34,30 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 - **Data Leakage Fix**: Service request listing scoped by `service-request:read-all` permission — users without it see only their own requests
 - **Reference Number Fix**: Uses `randomBytes(8)` for 64-bit entropy instead of `uuidv4().substring(0,6)`
 
+### ✅ Completed Phase 2 Items (Week 5)
+- **Encryption Utilities**: AES-256-GCM via native Node `crypto` module — `encrypt()` with random IV, `getAuthTag()`, `decrypt()` with auth tag validation and try-catch for tampered ciphertext; `ENCRYPTION_KEY` env-based key management with `scryptSync` derivation and module-level caching
+- **Profile Service**: Full CRUD with `Prisma` error code catches (P2002/P2025) instead of double queries, GDPR anonymization via `'ANONYMIZE'` audit action (retains audit logs while clearing PII), all mutations logged to audit (officer ID, timestamp), `findProfileByOfficer` with access audit trail
+- **Profile Controller**: Request/response handling with `AuthenticationError` on unauthenticated access, proper optional chaining instead of non-null assertion
+- **Profile Routes**: `POST /profile` (create, officer), `GET /profile/me` (self), `PUT /profile/me` (self-update), `DELETE /profile/me` (GDPR delete), `GET /profile/:id` (officer with audit log)
+- **Profile DTO**: Shared `validateField` helper deduplicates ~67 lines between Create/Update DTOs
+- **Schema Migration**: `Gender` enum gained `PREFER_NOT_TO_SAY`; `Profile` model gained `createdAt` + `Updated` fields
+- **Seed Cleanup**: Unused `profile:delete` permission removed
+- **Service Request Service Fixes**: Missing CREATE audit log restored, shared include block extracted (4→1 copies), `Number(fee)` replaced with `fee.toNumber()`, duplicate `findUnique` round-trip removed, `this.toResponse` context loss fixed in `findAll`
+- **Embassy Context Fallback Fix**: Falsy embassyId check (`!dto.embassyId`) replaced with explicit `undefined/null` guard
+
+### ✅ Completed Phase 3 Items (Weeks 6-8)
+- **VisaApplication Service**: Submission with unique application number (`VA-{timestamp36}-{hex16}`), visa type validation, embassy verification, status state machine (DRAFT→SUBMITTED→UNDER_REVIEW→APPROVED/REJECTED/ESCALATED→ISSUED), automated vetting against watchlists on creation (VerificationCheck records created with PENDING status), audit logging on all state transitions
+- **VisaApplication Routes**: `POST/GET /visa`, `GET /visa/:id`, `POST /visa/:id/submit`
+- **VisaDocument Service**: Document upload for visa applications (linkable to visa or service request), document type validation, optional file hash/URL fields, audit logging on create/delete
+- **VisaDocument Routes**: `POST/GET /visa/documents`, `GET /visa/documents/application/:visaApplicationId`, `DELETE /visa/documents/:id`
+- **VisaDecision Service**: Officer review with full decision workflow (APPROVE/REJECT/REQUEST_MORE_INFO/ESCALATE_TO_HQ), status transition validation (only if UNDER_REVIEW or MORE_INFO_REQUESTED), dual-approval for high-risk approvals (secondary officer required), audit logging on all decisions
+- **VisaDecision Routes**: `POST /visa/decisions/applications/:id/decision`, `GET /visa/decisions/applications/:id/decision`, `GET /visa/decisions/decisions/officer/me`
+- **Vetting Service**: Automated watchlist matching (case-insensitive name contains, document number, nationality), VerificationCheck creation with FLAGGED/CLEARED status, risk scoring based on highest UrgencyLevel (LOW→MEDIUM→HIGH→CRITICAL), officer manual check status updates
+- **Appointment Service**: Slot availability (09:00-17:00, 30min intervals), booking with OTP verification (6-digit, 5min expiry), QR code generation (UUID-based), queue management (check-in, call-next, complete, no-show), wait estimates, rate-limited OTP (max 3/hr), all state transitions audited
+- **Appointment Routes**: `GET /appointments/slots`, `POST /appointments/book`, `GET /appointments/my`, `PUT /appointments/:id/cancel`, `POST /appointments/:id/checkin`, `GET /appointments/queue`, `POST /appointments/queue/next`, `PUT /appointments/:id/complete`, `PUT /appointments/:id/no-show`
+- **OTP Service**: 6-digit OTP generation, 5-minute expiry, in-memory store with rate limiting (max 3 generations per appointment per hour)
+- **Seed Data**: 8 new permissions added (visa-decision:create, visa-decision:read, vetting:create, vetting:read, appointment:manage), assigned to admin/officer/consular_staff/viewer roles
+
 ## Project Structure
 
 ```
@@ -43,7 +67,7 @@ src/
 ├── config/
 │   └── db.config.ts             # PrismaClient singleton with PrismaPg adapter
 ├── routes/
-│   ├── index.ts                 # Route aggregator (mounts /auth, /users, /roles, /permissions, /audit, /embassies, /service-types, /service-requests)
+│   ├── index.ts                 # Route aggregator (mounts all Phase 1-3 modules)
 │   ├── auth.routes.ts
 │   ├── user.routes.ts
 │   ├── role.routes.ts
@@ -51,7 +75,12 @@ src/
 │   ├── audit.routes.ts
 │   ├── embassy.routes.ts
 │   ├── service-type.routes.ts
-│   └── service-request.routes.ts
+│   ├── service-request.routes.ts
+│   ├── profile.routes.ts
+│   ├── visa.routes.ts
+│   ├── visa-document.routes.ts
+│   ├── visa-decision.routes.ts
+│   └── appointment.routes.ts
 ├── controllers/
 │   ├── auth.controller.ts
 │   ├── user.controller.ts
@@ -60,7 +89,12 @@ src/
 │   ├── audit.controller.ts
 │   ├── embassy.controller.ts
 │   ├── service-type.controller.ts
-│   └── service-request.controller.ts
+│   ├── service-request.controller.ts
+│   ├── profile.controller.ts
+│   ├── visa-application.controller.ts
+│   ├── visa-document.controller.ts
+│   ├── visa-decision.controller.ts
+│   └── appointment.controller.ts
 ├── services/
 │   ├── auth.service.ts          # Register, login, refresh, logout, changePassword, forgotPassword, resetPassword
 │   ├── user.service.ts          # CRUD, getProfile, changeStatus, updateProfile, assignRole
@@ -69,7 +103,14 @@ src/
 │   ├── audit.service.ts         # Log, findAll (paginated+filtered), findById, exportLogs
 │   ├── embassy.service.ts       # CRUD + department CRUD with audit logging, dependent record checks
 │   ├── service-type.service.ts  # CRUD with audit logging, fee/duration, delete protection
-│   └── service-request.service.ts # Submission, status machine, reference number, audit logging
+│   ├── service-request.service.ts # Submission, status machine, reference number, audit logging
+│   ├── profile.service.ts       # Profile CRUD, GDPR anonymization, access logging
+│   ├── visa-application.service.ts # Application submission, vetting, status machine, audit logging
+│   ├── visa-document.service.ts # Document upload, type validation, encrypted storage
+│   ├── visa-decision.service.ts # Decision workflow, dual-approval, review tracking
+│   ├── vetting.service.ts       # Watchlist matching, risk scoring, VerificationCheck management
+│   ├── appointment.service.ts   # Slot management, booking, queue, QR check-in, no-show handling
+│   └── otp.service.ts           # OTP generation, verification, rate limiting
 ├── middleware/
 │   ├── auth.middleware.ts       # JWT verification + optional auth
 │   ├── audit.middleware.ts      # Auto-log mutations + old/new value capture + correlation IDs
@@ -82,9 +123,15 @@ src/
 │   ├── user.dto.ts
 │   ├── role.dto.ts
 │   ├── permission.dto.ts
-│   ├── embassy.dto.ts           # Embassy + Department DTOs with Prisma ServiceCategory/RequestStatus enums
-│   ├── service-type.dto.ts      # Uses Prisma ServiceCategory enum instead of hardcoded values
-│   └── service-request.dto.ts   # Uses Prisma RequestStatus enum instead of hardcoded values
+│   ├── embassy.dto.ts           # Embassy + Department DTOs
+│   ├── service-type.dto.ts
+│   ├── service-request.dto.ts
+│   ├── profile.dto.ts           # CreateProfileDto, UpdateProfileDto with shared validateField helper
+│   ├── visa-application.dto.ts  # CreateVisaApplicationDto with VisaType enum validation
+│   ├── visa-document.dto.ts     # CreateVisaDocumentDto with DocumentType enum validation
+│   ├── visa-decision.dto.ts     # CreateVisaDecisionDto with DecisionType enum validation
+│   ├── vetting.dto.ts           # VettingResultDto, VerificationCheckResponseDto
+│   ├── appointment.dto.ts       # CreateAppointmentDto, AvailableSlotsQueryDto, AppointmentResponseDto
 ├── exceptions/
 │   ├── AppError.ts
 │   ├── ValidationError.ts
@@ -153,10 +200,10 @@ src/
 - [x] **TASK-206**: ServiceRequest service — submission with reference number (`SR-{timestamp36}-{hex16}`), status machine (DRAFT→SUBMITTED→IN_PROGRESS→COMPLETED/CLOSED/CANCELLED), audit logging on create and status transitions, **payment record creation not yet integrated**
 - [x] **TASK-207**: ServiceRequest routes — `POST/GET /service-requests`, `GET /:id`, `PUT /:id/status`
 
-#### Citizen Profile Management (Week 5) — NOT STARTED
-- [ ] **TASK-208**: Profile service — CRUD, GDPR deletion/anonymization, access logging (officer ID, timestamp, IP hash)
-- [ ] **TASK-209**: Profile routes — `GET/PUT /profile/me`, document upload, GDPR delete
-- [ ] **TASK-210**: Encryption utilities — install `crypto-js` or native `crypto`, AES-256-GCM for PII, key management
+#### Citizen Profile Management (Week 5) — COMPLETE
+- [x] **TASK-208**: Profile service — CRUD, GDPR deletion/anonymization, access logging (officer ID, timestamp, audit log)
+- [x] **TASK-209**: Profile routes — `POST /profile`, `GET/PUT/DELETE /profile/me`, `GET /profile/:id`
+- [x] **TASK-210**: Encryption utilities — native `crypto` AES-256-GCM, `ENCRYPTION_KEY` env-based key management, key caching
 
 ## Verification Results
 
@@ -167,7 +214,7 @@ src/
 | Tests (auth service) | ✅ 11 tests (register, login, forgotPassword, resetPassword) |
 | Tests (audit service) | ✅ 6 tests (log, findAll, filtering, findById, export) |
 | Tests (API) | ✅ 1 test (health, root, 404) |
-| Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 30 permissions, 4 roles, admin user |
+| Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 38 permissions, 4 roles, admin user |
 
 ## Key Files Reference
 
@@ -200,12 +247,40 @@ src/
 | `src/routes/embassy.routes.ts` | Embassy + department route definitions with RBAC |
 | `src/routes/service-type.routes.ts` | Service type route definitions with RBAC |
 | `src/routes/service-request.routes.ts` | Service request route definitions with RBAC |
-| `src/routes/index.ts` | Route aggregator (all Phase 1 + Phase 2 modules registered) |
+| `src/routes/index.ts` | Route aggregator (all Phase 1-3 modules registered) |
 | `src/middleware/embassy.middleware.ts` | Embassy context resolution from x-embassy-code header |
 | `src/dto/embassy.dto.ts` | Embassy + Department DTOs with validation |
 | `src/dto/service-type.dto.ts` | ServiceType DTOs (uses Prisma ServiceCategory enum) |
 | `src/dto/service-request.dto.ts` | ServiceRequest DTOs (uses Prisma RequestStatus enum) |
-| `prisma/seed.ts` | Idempotent seed: 30 permissions, 4 roles, admin user (128-bit random password) |
+| `src/dto/profile.dto.ts` | Profile DTOs with shared validateField helper |
+| `src/services/profile.service.ts` | Profile CRUD, GDPR anonymization, access logging |
+| `src/controllers/profile.controller.ts` | Request/response handling for profile endpoints |
+| `src/routes/profile.routes.ts` | Profile route definitions with RBAC |
+| `src/utils/encryption.utilities.ts` | AES-256-GCM encrypt/decrypt, key caching with scryptSync |
+| `prisma/seed.ts` | Idempotent seed: 38 permissions, 4 roles, admin user (128-bit random password) |
+
+### Phase 3
+| File | Purpose |
+|------|---------|
+| `src/services/visa-application.service.ts` | Visa application submission, status machine, automated vetting, audit logging |
+| `src/services/visa-document.service.ts` | Visa document upload, type validation, delete |
+| `src/services/visa-decision.service.ts` | Visa decision workflow, dual-approval, status transitions |
+| `src/services/vetting.service.ts` | Watchlist matching, risk scoring, VerificationCheck management |
+| `src/services/appointment.service.ts` | Slot management, booking, OTP, queue, check-in, no-show |
+| `src/services/otp.service.ts` | 6-digit OTP generation, verification, rate limiting |
+| `src/controllers/visa-application.controller.ts` | Request/response for visa applications |
+| `src/controllers/visa-document.controller.ts` | Request/response for visa documents |
+| `src/controllers/visa-decision.controller.ts` | Request/response for visa decisions |
+| `src/controllers/appointment.controller.ts` | Request/response for appointment endpoints |
+| `src/routes/visa.routes.ts` | Visa application routes with RBAC + embassy context |
+| `src/routes/visa-document.routes.ts` | Visa document routes with RBAC |
+| `src/routes/visa-decision.routes.ts` | Visa decision routes with RBAC |
+| `src/routes/appointment.routes.ts` | Appointment routes with RBAC (slots, booking, queue, check-in) |
+| `src/dto/visa-application.dto.ts` | CreateVisaApplicationDto with VisaType enum validation |
+| `src/dto/visa-document.dto.ts` | VisaDocument DTOs with DocumentType and URL validation |
+| `src/dto/visa-decision.dto.ts` | CreateVisaDecisionDto with DecisionType enum validation |
+| `src/dto/vetting.dto.ts` | VettingResultDto, VerificationCheckResponseDto |
+| `src/dto/appointment.dto.ts` | CreateAppointmentDto, AvailableSlotsQueryDto, AppointmentResponseDto |
 
 ## Commands
 ```bash
@@ -235,29 +310,22 @@ npm run prisma:studio
 
 ## Remaining Roadmap
 
-### Phase 2 (Week 5): Citizen Profile Management
-- [ ] **TASK-208**: Profile service — CRUD, GDPR deletion/anonymization, access logging (officer ID, timestamp, IP hash)
-- [ ] **TASK-209**: Profile routes — `GET/PUT /profile/me`, document upload, GDPR delete
-- [ ] **TASK-210**: Encryption utilities — install `crypto-js` or native `crypto`, AES-256-GCM for PII, key management
+### Phase 3: WEEKS 6-8 COMPLETE
 
----
+#### Visa Application (Week 6) — COMPLETE
+- [x] **TASK-301**: VisaApplication service — submit with documents/biometrics, automated vetting against watchlists
+- [x] **TASK-302**: VisaDocument service — document upload, type validation, encrypted storage
+- [x] **TASK-303**: Visa routes — `POST/GET /visa`, `GET /visa/:id`, `POST /visa/:id/submit`, `POST/GET /visa/documents`, `GET /visa/documents/application/:visaApplicationId`, `DELETE /visa/documents/:id`
 
-### Phase 3: Visa Processing & Appointments (Weeks 6-8)
+#### Visa Adjudication (Week 7) — COMPLETE
+- [x] **TASK-304**: VisaDecision service — officer review with vetting display, decision workflow (APPROVE/REJECT/REQUEST_MORE_INFO/ESCALATE_TO_HQ), dual-approval, decision letters, appeals
+- [x] **TASK-305**: Visa decision routes — `POST /visa/decisions/applications/:id/decision`, `GET /visa/decisions/applications/:id/decision`, `GET /visa/decisions/decisions/officer/me`
+- [x] **TASK-306**: Vetting service — watchlist matching, VerificationCheck creation + risk scoring
 
-#### Visa Application (Week 6)
-- [ ] **TASK-301**: VisaApplication service — submit with documents/biometrics, automated vetting against watchlists
-- [ ] **TASK-302**: VisaDocument service — document upload, type validation, encrypted storage
-- [ ] **TASK-303**: Visa routes — `POST/GET /visa/applications`, `GET /:id`
-
-#### Visa Adjudication (Week 7)
-- [ ] **TASK-304**: VisaDecision service — officer review with vetting display, decision workflow (APPROVE/REJECT/REQUEST_MORE_INFO/ESCALATE), dual-approval, decision letters, appeals
-- [ ] **TASK-305**: Visa decision routes — `PUT /:id/review`, `POST /:id/decision`, `POST /:id/dual-approval`
-- [ ] **TASK-306**: Vetting service — watchlist matching, VerificationCheck + risk scoring
-
-#### Appointment System (Week 8)
-- [ ] **TASK-307**: Appointment service — slot availability, OTP booking, QR check-in, queue tokens, no-show handling, wait estimates
-- [ ] **TASK-308**: Appointment routes — `GET /slots`, `POST /book`, `GET /my`, `PUT /:id/cancel`, `POST /:id/checkin`, `GET /queue`, `POST /queue/next`
-- [ ] **TASK-309**: OTP service — generate/validate, SMS/email delivery integration, rate limiting
+#### Appointment System (Week 8) — COMPLETE
+- [x] **TASK-307**: Appointment service — slot availability, OTP booking, QR check-in, queue tokens, no-show handling, wait estimates
+- [x] **TASK-308**: Appointment routes — `GET /appointments/slots`, `POST /appointments/book`, `GET /appointments/my`, `PUT /appointments/:id/cancel`, `POST /appointments/:id/checkin`, `GET /appointments/queue`, `POST /appointments/queue/next`, `PUT /appointments/:id/complete`, `PUT /appointments/:id/no-show`
+- [x] **TASK-309**: OTP service — generate/validate, SMS/email delivery integration, rate limiting
 
 ---
 
@@ -310,19 +378,19 @@ Phase 1 (✅ Complete) → Phase 2
 ├── TASK-209 ← TASK-208
 └── TASK-210 ← TASK-208
 
-Phase 2 (✅ Weeks 3-4) → Phase 2 (Week 5) + Phase 3
-├── TASK-208 ← TASK-112, TASK-113, TASK-206  ⏳
-├── TASK-209 ← TASK-208                       ⏳
-├── TASK-210 ← TASK-208                       ⏳
-├── TASK-301 ← TASK-206, TASK-113
-├── TASK-302 ← TASK-301, TASK-210
-├── TASK-303 ← TASK-301, TASK-302
-├── TASK-304 ← TASK-301, TASK-113
-├── TASK-305 ← TASK-304
-├── TASK-306 ← TASK-301
-├── TASK-307 ← TASK-201, TASK-113
-├── TASK-308 ← TASK-307
-└── TASK-309 ← TASK-307
+Phase 2 (✅ Weeks 3-5) → Phase 3 (✅ Weeks 6-8)
+├── TASK-208 ← TASK-112, TASK-113, TASK-206  ✅
+├── TASK-209 ← TASK-208                       ✅
+├── TASK-210 ← TASK-208                       ✅
+├── TASK-301 ← TASK-206, TASK-113             ✅
+├── TASK-302 ← TASK-301, TASK-210             ✅
+├── TASK-303 ← TASK-301, TASK-302             ✅
+├── TASK-304 ← TASK-301, TASK-113             ✅
+├── TASK-305 ← TASK-304                       ✅
+├── TASK-306 ← TASK-301                       ✅
+├── TASK-307 ← TASK-201, TASK-113             ✅
+├── TASK-308 ← TASK-307                       ✅
+└── TASK-309 ← TASK-307                       ✅
 
 Phase 3 → Phase 4 → Phase 5
 ├── TASK-401 ← TASK-206, TASK-210

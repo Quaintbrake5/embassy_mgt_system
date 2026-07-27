@@ -8,6 +8,10 @@ import embassyRoutes from './embassy.routes';
 import serviceTypeRoutes from './service-type.routes';
 import serviceRequestRoutes from './service-request.routes';
 import profileRoutes from './profile.routes';
+import visaRoutes from './visa.routes';
+import visaDocumentRoutes from './visa-document.routes';
+import visaDecisionRoutes from './visa-decision.routes';
+import appointmentRoutes from './appointment.routes';
 
 const router = Router();
 
@@ -20,5 +24,9 @@ router.use('/embassies', embassyRoutes);
 router.use('/service-types', serviceTypeRoutes);
 router.use('/service-requests', serviceRequestRoutes);
 router.use('/profile', profileRoutes);
+router.use('/visa', visaRoutes);
+router.use('/visa/documents', visaDocumentRoutes);
+router.use('/visa/decisions', visaDecisionRoutes);
+router.use('/appointments', appointmentRoutes);
 
 export default router;

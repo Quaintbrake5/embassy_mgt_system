@@ -41,6 +41,11 @@ const PERMISSIONS = [
   { name: 'Profile Create', slug: 'profile:create', description: 'Create user profile' },
   { name: 'Profile Read', slug: 'profile:read', description: 'View user profiles' },
   { name: 'Profile Update', slug: 'profile:update', description: 'Update user profile' },
+  { name: 'Visa Decision Create', slug: 'visa-decision:create', description: 'Make visa decisions' },
+  { name: 'Visa Decision Read', slug: 'visa-decision:read', description: 'View visa decisions' },
+  { name: 'Vetting Create', slug: 'vetting:create', description: 'Run vetting checks' },
+  { name: 'Vetting Read', slug: 'vetting:read', description: 'View vetting results' },
+  { name: 'Appointment Manage', slug: 'appointment:manage', description: 'Manage appointment queue' },
 ];
 
 const ROLES = [
@@ -57,7 +62,9 @@ const ROLES = [
     permissions: [
       'user:read', 'embassy:read', 'department:read',
       'service-type:read', 'service-request:read', 'service-request:update', 'service-request:read-all',
-      'visa:read', 'visa:update', 'appointment:read', 'appointment:update',
+      'visa:read', 'visa:update', 'visa-decision:create', 'visa-decision:read',
+      'vetting:create', 'vetting:read',
+      'appointment:read', 'appointment:update', 'appointment:manage',
       'audit:read', 'profile:read',
     ],
   },
@@ -68,7 +75,8 @@ const ROLES = [
     permissions: [
       'user:read', 'embassy:read', 'department:read',
       'service-type:read', 'service-request:create', 'service-request:read',
-      'visa:create', 'visa:read', 'appointment:create', 'appointment:read',
+      'visa:create', 'visa:read', 'visa-decision:read', 'vetting:read',
+      'appointment:create', 'appointment:read',
     ],
   },
   {
@@ -77,7 +85,7 @@ const ROLES = [
     description: 'Read-only access',
     permissions: [
       'user:read', 'embassy:read', 'department:read',
-      'service-type:read', 'service-request:read', 'visa:read',
+      'service-type:read', 'service-request:read', 'visa:read', 'visa-decision:read',
       'appointment:read', 'audit:read', 'profile:read',
     ],
   },
