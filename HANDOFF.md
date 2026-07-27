@@ -1,9 +1,9 @@
-# HANDOFF — Embassy Management System (EMS) — Phase 1 Complete
+# HANDOFF — Embassy Management System (EMS) — Phase 1 + Phase 2 (Weeks 1-4) Complete
 
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Fully Complete
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-4) Complete
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -20,6 +20,20 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 - **TypeScript**: Compiles cleanly — `npx tsc --noEmit` → zero errors
 - **Memory Leak Mitigation**: In-memory token store has periodic eviction (5min) + 10K cap, process signal listeners moved exclusively to entry point (no accumulation on module import), dynamic `import()` in auth middleware replaced with static import, audit export capped at 10K records
 
+### ✅ Completed Phase 2 Items (Weeks 3-4)
+- **Embassy Service**: Full CRUD with audit logging on all mutations, dependent-record check on delete (departments, service requests, appointments, visa applications, emergency cases), unique code enforcement
+- **Department Service**: CRUD nested under embassies with audit logging on all mutations, unique slug enforcement
+- **Embassy Routes**: Full REST routes with RBAC — `GET/POST /embassies`, `GET/PUT/DELETE /embassies/:id`, `GET/POST /embassies/:embassyId/departments`, `PUT/DELETE /departments/:id`
+- **Embassy Context Middleware**: Resolves embassy from `x-embassy-code` header with permission validation (requires `embassy:*` permission), wired into embassy routes
+- **ServiceType Service**: Full CRUD with audit logging, fee/duration/category management, delete blocked on existing service requests
+- **ServiceType Routes**: `GET/POST /service-types`, `GET/PUT/DELETE /service-types/:id`, `GET /service-types/category/:category`
+- **ServiceRequest Service**: Submission with unique reference number (`SR-{timestamp36}-{hex16}`), strict status state machine (DRAFT→SUBMITTED→IN_PROGRESS→COMPLETED/CLOSED/CANCELLED), audit logging on create and status transitions
+- **ServiceRequest Routes**: `POST/GET /service-requests`, `GET /:id`, `PUT /:id/status`
+- **Route Registration**: All new modules registered in `src/routes/index.ts`
+- **Seed Data**: Idempotent seed with 30 permissions (including `service-request:read-all`), 4 roles, admin user with random 128-bit password
+- **Data Leakage Fix**: Service request listing scoped by `service-request:read-all` permission — users without it see only their own requests
+- **Reference Number Fix**: Uses `randomBytes(8)` for 64-bit entropy instead of `uuidv4().substring(0,6)`
+
 ## Project Structure
 
 ```
@@ -29,36 +43,48 @@ src/
 ├── config/
 │   └── db.config.ts             # PrismaClient singleton with PrismaPg adapter
 ├── routes/
-│   ├── index.ts                 # Route aggregator (mounts /auth, /users, /roles, /permissions, /audit)
+│   ├── index.ts                 # Route aggregator (mounts /auth, /users, /roles, /permissions, /audit, /embassies, /service-types, /service-requests)
 │   ├── auth.routes.ts
 │   ├── user.routes.ts
 │   ├── role.routes.ts
 │   ├── permission.routes.ts
-│   └── audit.routes.ts
+│   ├── audit.routes.ts
+│   ├── embassy.routes.ts
+│   ├── service-type.routes.ts
+│   └── service-request.routes.ts
 ├── controllers/
 │   ├── auth.controller.ts
 │   ├── user.controller.ts
 │   ├── role.controller.ts
 │   ├── permission.controller.ts
-│   └── audit.controller.ts
+│   ├── audit.controller.ts
+│   ├── embassy.controller.ts
+│   ├── service-type.controller.ts
+│   └── service-request.controller.ts
 ├── services/
 │   ├── auth.service.ts          # Register, login, refresh, logout, changePassword, forgotPassword, resetPassword
 │   ├── user.service.ts          # CRUD, getProfile, changeStatus, updateProfile, assignRole
 │   ├── role.service.ts
 │   ├── permission.service.ts
 │   ├── audit.service.ts         # Log, findAll (paginated+filtered), findById, exportLogs
-│   └── implementation/          # Ready for Phase 2+ domain logic
+│   ├── embassy.service.ts       # CRUD + department CRUD with audit logging, dependent record checks
+│   ├── service-type.service.ts  # CRUD with audit logging, fee/duration, delete protection
+│   └── service-request.service.ts # Submission, status machine, reference number, audit logging
 ├── middleware/
 │   ├── auth.middleware.ts       # JWT verification + optional auth
 │   ├── audit.middleware.ts      # Auto-log mutations + old/new value capture + correlation IDs
 │   ├── error.middleware.ts      # Global error handler + 404
 │   ├── rbac.middleware.ts       # requirePermission, requireRole, requireAnyPermission, requireAllPermissions
+│   ├── embassy.middleware.ts    # Embassy context resolution from x-embassy-code header
 │   └── validation.middleware.ts
 ├── dto/
 │   ├── auth.dto.ts              # RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto
 │   ├── user.dto.ts
 │   ├── role.dto.ts
-│   └── permission.dto.ts
+│   ├── permission.dto.ts
+│   ├── embassy.dto.ts           # Embassy + Department DTOs with Prisma ServiceCategory/RequestStatus enums
+│   ├── service-type.dto.ts      # Uses Prisma ServiceCategory enum instead of hardcoded values
+│   └── service-request.dto.ts   # Uses Prisma RequestStatus enum instead of hardcoded values
 ├── exceptions/
 │   ├── AppError.ts
 │   ├── ValidationError.ts
@@ -78,39 +104,59 @@ src/
     └── api.test.ts              # 1 test: health + root + 404
 ```
 
-## 🔄 Phase 1 Task Status — ALL COMPLETE
+## ✅ Phase 1 & 2 Task Status
 
-### Week 1: Server Infrastructure & Authentication Core
+### Phase 1: ALL COMPLETE
 
-#### Server Infrastructure
+#### Week 1: Server Infrastructure & Authentication Core
+
+##### Server Infrastructure
 - [x] **TASK-101**: Implement Express server — helmet, CORS, rate limiting (100/min general, 20/15min auth), morgan structured logging with correlation IDs, health check, global error handler, API versioning
 - [x] **TASK-102**: Entry point — DB connection, server start on PORT 3010, graceful shutdown
 
-#### Authentication Module
+##### Authentication Module
 - [x] **TASK-103**: validator.js installed and configured
 - [x] **TASK-104**: Validation schemas for auth, user, role/permission DTOs
 - [x] **TASK-105**: Auth middleware — JWT verification, token expiration, optional auth
 - [x] **TASK-106**: Auth service — register, login, refresh (rotation), logout, changePassword, forgotPassword (secure token generation), resetPassword (token validation + password update)
 - [x] **TASK-107**: Auth routes — register, login, refresh, logout, forgot-password, reset-password, change-password
 
-### Week 2: Authorization (RBAC), User Management, Audit Logging
+#### Week 2: Authorization (RBAC), User Management, Audit Logging
 
-#### Authorization (RBAC)
+##### Authorization (RBAC)
 - [x] **TASK-108**: RBAC middleware — requirePermission, requireRole, requireAnyPermission, requireAllPermissions, getUserPermissions
 - [x] **TASK-109**: Roles routes — full CRUD + permission assignment
 - [x] **TASK-110**: Permissions routes — full CRUD (extended beyond GET-only spec)
 
-#### User Management
+##### User Management
 - [x] **TASK-111**: Users routes — GET /me, PUT /me (profile update), GET /:id, PUT /:id, PATCH /:id/status, PUT /:id/role, DELETE /:id
 - [x] **TASK-112**: User service — CRUD, getProfile, changeStatus, updateProfile (strips roleId/status for self-update), assignRole
 
-#### Audit Logging
+##### Audit Logging
 - [x] **TASK-113**: Audit service — log creation, paginated queries with filtering (user/entity/action/date range), findById, exportLogs
 - [x] **TASK-114**: Audit middleware — auto-log mutations, old/new value capture, IP/UA logging, correlation ID propagation, uses AuditService
 - [x] **TASK-115**: Audit routes — GET /audit (paginated with filters), GET /audit/:id, GET /audit/export
 
-#### Integration & Testing
+##### Integration & Testing
 - [x] **TASK-116**: 18 integration/unit tests across 3 suites — auth flow, audit service, API health — all passing
+
+### Phase 2: WEEKS 3-4 COMPLETE
+
+#### Embassy & Department Management (Week 3)
+- [x] **TASK-201**: Embassy + Department service — CRUD for both, audit logging on mutations, dependent-record check on delete, unique code/slug enforcement
+- [x] **TASK-202**: Embassy routes — `GET/POST /embassies`, `GET/PUT/DELETE /embassies/:id`, `GET/POST /embassies/:embassyId/departments`, `PUT/DELETE /departments/:id`
+- [x] **TASK-203**: Embassy context middleware — extract embassy from `x-embassy-code` header, validate user has `embassy:*` permission, set `req.embassyContext`
+
+#### Service Type & Request Management (Week 4)
+- [x] **TASK-204**: ServiceType service — admin CRUD, fee/duration/category, delete blocked on existing service requests, audit logging
+- [x] **TASK-205**: ServiceType routes — `GET/POST /service-types`, `GET/PUT/DELETE /service-types/:id`, `GET /service-types/category/:category`
+- [x] **TASK-206**: ServiceRequest service — submission with reference number (`SR-{timestamp36}-{hex16}`), status machine (DRAFT→SUBMITTED→IN_PROGRESS→COMPLETED/CLOSED/CANCELLED), audit logging on create and status transitions, **payment record creation not yet integrated**
+- [x] **TASK-207**: ServiceRequest routes — `POST/GET /service-requests`, `GET /:id`, `PUT /:id/status`
+
+#### Citizen Profile Management (Week 5) — NOT STARTED
+- [ ] **TASK-208**: Profile service — CRUD, GDPR deletion/anonymization, access logging (officer ID, timestamp, IP hash)
+- [ ] **TASK-209**: Profile routes — `GET/PUT /profile/me`, document upload, GDPR delete
+- [ ] **TASK-210**: Encryption utilities — install `crypto-js` or native `crypto`, AES-256-GCM for PII, key management
 
 ## Verification Results
 
@@ -121,21 +167,45 @@ src/
 | Tests (auth service) | ✅ 11 tests (register, login, forgotPassword, resetPassword) |
 | Tests (audit service) | ✅ 6 tests (log, findAll, filtering, findById, export) |
 | Tests (API) | ✅ 1 test (health, root, 404) |
+| Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 30 permissions, 4 roles, admin user |
 
 ## Key Files Reference
+
+### Phase 1
 | File | Purpose |
 |------|---------|
 | `prisma/schema.prisma` | Complete DB schema (15 enums, 14 models) |
 | `src/config/db.config.ts` | PrismaClient singleton with PrismaPg adapter |
 | `src/server.ts` | Express app setup (helmet, rate limiting, correlation IDs, morgan) |
 | `src/index.ts` | Entry point (server bootstrap) |
+| `src/middleware/auth.middleware.ts` | JWT verification + optional auth |
+| `src/middleware/rbac.middleware.ts` | requirePermission, requireRole, getUserPermissions |
+| `src/middleware/audit.middleware.ts` | Auto-log mutations with old/new values |
+| `src/services/auth.service.ts` | Auth business logic (register, login, refresh, password reset) |
+| `src/services/user.service.ts` | User CRUD, profile management, role assignment |
+| `src/services/role.service.ts` | Role CRUD, permission assignment |
+| `src/services/permission.service.ts` | Permission CRUD |
+| `src/services/audit.service.ts` | Audit log querying, filtering, export |
 | `.env` | JWT secrets, DATABASE_URL, PORT |
-| `src/routes/*.ts` | API route definitions |
-| `src/services/*.ts` | Business logic |
-| `src/controllers/*.ts` | Request/response handling |
-| `src/middleware/*.ts` | Cross-cutting concerns (auth, audit, validation, errors, RBAC) |
-| `src/dto/*.ts` | Request validation DTOs |
-| `src/__tests__/*.test.ts` | Integration/unit tests |
+
+### Phase 2
+| File | Purpose |
+|------|---------|
+| `src/services/embassy.service.ts` | Embassy + Department CRUD, audit logging, dependent record checks |
+| `src/services/service-type.service.ts` | ServiceType CRUD, audit logging, delete protection |
+| `src/services/service-request.service.ts` | ServiceRequest submission, state machine, reference numbers, audit logging |
+| `src/controllers/embassy.controller.ts` | Request/response handling for embassy + department endpoints |
+| `src/controllers/service-type.controller.ts` | Request/response handling for service type endpoints |
+| `src/controllers/service-request.controller.ts` | Request/response handling with data leakage prevention |
+| `src/routes/embassy.routes.ts` | Embassy + department route definitions with RBAC |
+| `src/routes/service-type.routes.ts` | Service type route definitions with RBAC |
+| `src/routes/service-request.routes.ts` | Service request route definitions with RBAC |
+| `src/routes/index.ts` | Route aggregator (all Phase 1 + Phase 2 modules registered) |
+| `src/middleware/embassy.middleware.ts` | Embassy context resolution from x-embassy-code header |
+| `src/dto/embassy.dto.ts` | Embassy + Department DTOs with validation |
+| `src/dto/service-type.dto.ts` | ServiceType DTOs (uses Prisma ServiceCategory enum) |
+| `src/dto/service-request.dto.ts` | ServiceRequest DTOs (uses Prisma RequestStatus enum) |
+| `prisma/seed.ts` | Idempotent seed: 30 permissions, 4 roles, admin user (128-bit random password) |
 
 ## Commands
 ```bash
@@ -154,6 +224,9 @@ npm run typecheck
 # Run tests
 npm test
 
+# Run seed
+npx tsx prisma/seed.ts
+
 # Prisma commands
 npm run prisma:generate
 npm run prisma:migrate -- --name <name>
@@ -162,20 +235,7 @@ npm run prisma:studio
 
 ## Remaining Roadmap
 
-### Phase 2: Embassy, Services, Requests (Weeks 3-5)
-
-#### Embassy & Department Management (Week 3)
-- [ ] **TASK-201**: Embassy + Department service — CRUD for both, embassy context resolution
-- [ ] **TASK-202**: Embassy routes — `GET/POST /embassies`, `GET/POST /departments`
-- [ ] **TASK-203**: Embassy context middleware — extract embassy from header/user, filter services
-
-#### Service Type & Request Management (Week 4)
-- [ ] **TASK-204**: ServiceType service — admin CRUD, fee/duration/category/appointment-requirement
-- [ ] **TASK-205**: ServiceType routes — `GET/POST /service-types`
-- [ ] **TASK-206**: ServiceRequest service — submission with reference number, status machine (DRAFT→SUBMITTED→IN_PROGRESS→COMPLETED/CLOSED/CANCELLED), payment record creation
-- [ ] **TASK-207**: ServiceRequest routes — `POST/GET /service-requests`, `PUT /:id/status`
-
-#### Citizen Profile Management (Week 5)
+### Phase 2 (Week 5): Citizen Profile Management
 - [ ] **TASK-208**: Profile service — CRUD, GDPR deletion/anonymization, access logging (officer ID, timestamp, IP hash)
 - [ ] **TASK-209**: Profile routes — `GET/PUT /profile/me`, document upload, GDPR delete
 - [ ] **TASK-210**: Encryption utilities — install `crypto-js` or native `crypto`, AES-256-GCM for PII, key management
@@ -250,7 +310,10 @@ Phase 1 (✅ Complete) → Phase 2
 ├── TASK-209 ← TASK-208
 └── TASK-210 ← TASK-208
 
-Phase 2 → Phase 3
+Phase 2 (✅ Weeks 3-4) → Phase 2 (Week 5) + Phase 3
+├── TASK-208 ← TASK-112, TASK-113, TASK-206  ⏳
+├── TASK-209 ← TASK-208                       ⏳
+├── TASK-210 ← TASK-208                       ⏳
 ├── TASK-301 ← TASK-206, TASK-113
 ├── TASK-302 ← TASK-301, TASK-210
 ├── TASK-303 ← TASK-301, TASK-302

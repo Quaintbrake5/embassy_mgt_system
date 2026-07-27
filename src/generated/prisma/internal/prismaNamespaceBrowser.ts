@@ -151,7 +151,9 @@ export const ProfileScalarFieldEnum = {
   city: 'city',
   state: 'state',
   country: 'country',
-  postalCode: 'postalCode'
+  postalCode: 'postalCode',
+  createdAt: 'createdAt',
+  Updated: 'Updated'
 } as const
 
 export type ProfileScalarFieldEnum = (typeof ProfileScalarFieldEnum)[keyof typeof ProfileScalarFieldEnum]

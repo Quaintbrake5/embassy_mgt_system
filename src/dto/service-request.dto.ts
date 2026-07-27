@@ -93,6 +93,13 @@ export class ServiceRequestResponseDto {
     country: string;
     city: string;
   };
+  payments?: {
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    createdAt: Date;
+  }[];
 }
 
 export class PaginatedServiceRequestsDto {

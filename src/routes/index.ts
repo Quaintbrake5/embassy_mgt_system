@@ -7,6 +7,7 @@ import auditRoutes from './audit.routes';
 import embassyRoutes from './embassy.routes';
 import serviceTypeRoutes from './service-type.routes';
 import serviceRequestRoutes from './service-request.routes';
+import profileRoutes from './profile.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/audit', auditRoutes);
 router.use('/embassies', embassyRoutes);
 router.use('/service-types', serviceTypeRoutes);
 router.use('/service-requests', serviceRequestRoutes);
+router.use('/profile', profileRoutes);
 
 export default router;

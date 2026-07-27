@@ -19,6 +19,9 @@ export class ServiceRequestController {
       }
 
       const dto = CreateServiceRequestDto.sanitize(req.body);
+      if ((dto.embassyId === undefined || dto.embassyId === null) && req.embassyContext?.embassyId) {
+        dto.embassyId = req.embassyContext.embassyId;
+      }
       const errors = CreateServiceRequestDto.validate(dto);
       if (errors.length > 0) {
         throw new ValidationError('Validation failed', errors);
@@ -44,6 +47,7 @@ export class ServiceRequestController {
       const filter: any = { page, limit };
       if (status) filter.status = status;
       if (embassyId) filter.embassyId = embassyId;
+      else if (req.embassyContext?.embassyId) filter.embassyId = req.embassyContext.embassyId;
       if (!canViewAll) filter.userId = req.user!.userId;
 
       const result = await this.serviceRequestService.findAll(filter);

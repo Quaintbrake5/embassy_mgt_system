@@ -38,6 +38,9 @@ const PERMISSIONS = [
   { name: 'Appointment Create', slug: 'appointment:create', description: 'Book appointments' },
   { name: 'Appointment Read', slug: 'appointment:read', description: 'View appointments' },
   { name: 'Appointment Update', slug: 'appointment:update', description: 'Manage appointments' },
+  { name: 'Profile Create', slug: 'profile:create', description: 'Create user profile' },
+  { name: 'Profile Read', slug: 'profile:read', description: 'View user profiles' },
+  { name: 'Profile Update', slug: 'profile:update', description: 'Update user profile' },
 ];
 
 const ROLES = [
@@ -55,7 +58,7 @@ const ROLES = [
       'user:read', 'embassy:read', 'department:read',
       'service-type:read', 'service-request:read', 'service-request:update', 'service-request:read-all',
       'visa:read', 'visa:update', 'appointment:read', 'appointment:update',
-      'audit:read',
+      'audit:read', 'profile:read',
     ],
   },
   {
@@ -75,7 +78,7 @@ const ROLES = [
     permissions: [
       'user:read', 'embassy:read', 'department:read',
       'service-type:read', 'service-request:read', 'visa:read',
-      'appointment:read', 'audit:read',
+      'appointment:read', 'audit:read', 'profile:read',
     ],
   },
 ];

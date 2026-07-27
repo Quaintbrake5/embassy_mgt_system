@@ -6,6 +6,7 @@ import { validate } from '../middleware/validation.middleware';
 import { CreateServiceRequestDto, UpdateServiceRequestStatusDto } from '../dto/service-request.dto';
 import { ServiceRequestService } from '../services/service-request.service';
 import { prisma } from '../config/db.config';
+import { resolveEmbassyContext } from '../middleware/embassy.middleware';
 
 const serviceRequestService = new ServiceRequestService(prisma);
 const serviceRequestController = new ServiceRequestController(serviceRequestService);
@@ -13,6 +14,7 @@ const serviceRequestController = new ServiceRequestController(serviceRequestServ
 const router = Router();
 
 router.use(authMiddleware);
+router.use(resolveEmbassyContext);
 
 router.post('/', validate(CreateServiceRequestDto), requirePermission('service-request:create'), serviceRequestController.create);
 router.get('/', requirePermission('service-request:read'), serviceRequestController.findAll);

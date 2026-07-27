@@ -1,7 +1,10 @@
 import { PrismaClient } from '../generated/prisma/client';
 import { randomBytes } from 'crypto';
 import {
-  CreateServiceRequestDto, UpdateServiceRequestStatusDto, ServiceRequestResponseDto, PaginatedServiceRequestsDto,
+  CreateServiceRequestDto,
+  UpdateServiceRequestStatusDto,
+  ServiceRequestResponseDto,
+  PaginatedServiceRequestsDto,
 } from '../dto/service-request.dto';
 import { NotFoundError, ValidationError } from '../exceptions';
 
@@ -30,6 +33,13 @@ function generateReferenceNumber(): string {
 export class ServiceRequestService implements IServiceRequestService {
   private prisma: PrismaClient;
 
+  private static readonly SERVICE_REQUEST_INCLUDE = {
+    user: { select: { userid: true, firstName: true, lastName: true, email: true } },
+    serviceType: { select: { id: true, name: true, slug: true, category: true } },
+    embassy: { select: { id: true, name: true, code: true, country: true, city: true } },
+    payments: true,
+  } as const;
+
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
   }
@@ -57,11 +67,7 @@ export class ServiceRequestService implements IServiceRequestService {
         status: 'DRAFT',
         details: dto.details || {},
       },
-      include: {
-        user: { select: { userid: true, firstName: true, lastName: true, email: true } },
-        serviceType: { select: { id: true, name: true, slug: true, category: true } },
-        embassy: { select: { id: true, name: true, code: true, country: true, city: true } },
-      },
+      include: ServiceRequestService.SERVICE_REQUEST_INCLUDE,
     });
 
     await this.prisma.auditLog.create({
@@ -75,17 +81,25 @@ export class ServiceRequestService implements IServiceRequestService {
       },
     });
 
+    if (serviceType.fee && serviceType.fee.toNumber() > 0) {
+      await this.prisma.payment.create({
+        data: {
+          serviceRequestId: request.id,
+          userId,
+          amount: serviceType.fee,
+          currency: 'USD',
+          status: 'PENDING',
+        },
+      });
+    }
+
     return this.toResponse(request);
   }
 
   async findById(requestId: string): Promise<ServiceRequestResponseDto> {
     const request = await this.prisma.serviceRequest.findUnique({
       where: { id: requestId },
-      include: {
-        user: { select: { userid: true, firstName: true, lastName: true, email: true } },
-        serviceType: { select: { id: true, name: true, slug: true, category: true } },
-        embassy: { select: { id: true, name: true, code: true, country: true, city: true } },
-      },
+      include: ServiceRequestService.SERVICE_REQUEST_INCLUDE,
     });
 
     if (!request) {
@@ -117,17 +131,13 @@ export class ServiceRequestService implements IServiceRequestService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { userid: true, firstName: true, lastName: true, email: true } },
-          serviceType: { select: { id: true, name: true, slug: true, category: true } },
-          embassy: { select: { id: true, name: true, code: true, country: true, city: true } },
-        },
+        include: ServiceRequestService.SERVICE_REQUEST_INCLUDE,
       }),
       this.prisma.serviceRequest.count({ where }),
     ]);
 
     return {
-      data: data.map(this.toResponse),
+      data: data.map((r) => this.toResponse(r)),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
@@ -154,11 +164,7 @@ export class ServiceRequestService implements IServiceRequestService {
         status: dto.status as any,
         submittedAt: existing.status === 'DRAFT' && dto.status === 'SUBMITTED' ? new Date() : undefined,
       },
-      include: {
-        user: { select: { userid: true, firstName: true, lastName: true, email: true } },
-        serviceType: { select: { id: true, name: true, slug: true, category: true } },
-        embassy: { select: { id: true, name: true, code: true, country: true, city: true } },
-      },
+      include: ServiceRequestService.SERVICE_REQUEST_INCLUDE,
     });
 
     if (userId) {
@@ -195,6 +201,13 @@ export class ServiceRequestService implements IServiceRequestService {
       user: request.user,
       serviceType: request.serviceType,
       embassy: request.embassy,
+      payments: request.payments?.map((p: any) => ({
+        id: p.id,
+        amount: p.amount.toNumber(),
+        currency: p.currency,
+        status: p.status,
+        createdAt: p.createdAt,
+      })) || [],
     };
   }
 }

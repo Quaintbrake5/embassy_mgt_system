@@ -3,10 +3,10 @@
 ## Project Status Overview
 - **Project**: Embassy Management System (EMS)
 - **Tech Stack**: Node.js/TypeScript, Express.js v5, Prisma ORM v7.9, PostgreSQL 15+
-- **Current Phase**: Phase 1 - Auth, Users, Roles, Audit (Weeks 1-2)
+- **Current Phase**: Phase 2 (Weeks 3-4) - Embassy, Services, Requests (Embassy/Dept/ServiceType/ServiceRequest done)
 - **Database**: embassy_mgt_system on localhost:5433
 - **Server Port**: 3010
-- **Status**: Most Phase 1 tasks implemented (root route bug fixed, all routes working)
+- **Status**: Phase 1 complete. Phase 2 Weeks 3-4 (Embassy, Department, ServiceType, ServiceRequest) complete. Week 5 (Citizen Profile) pending.
 
 ---
 
@@ -228,62 +228,69 @@
 
 #### Week 3: Embassy & Department Management
 
-- [ ] **TASK-201**: Create embassy service (`src/services/embassy.service.ts`)
-  - [ ] Embassy CRUD operations
-  - [ ] Department CRUD operations
-  - [ ] Embassy context resolution
+- [x] **TASK-201**: Create embassy service (`src/services/embassy.service.ts`)
+  - [x] Embassy CRUD operations
+  - [x] Department CRUD operations
+  - [x] Embassy context resolution
+  - **Note**: Full CRUD with audit logging, dependent-record check on delete, unique code enforcement.
   - **Acceptance Criteria**: FR-03.1, FR-03.2, FR-03.3
   - **Dependencies**: TASK-116
   - **Estimated**: 4 hours
 
-- [ ] **TASK-202**: Create embassy routes (`src/routes/embassy.routes.ts`)
-  - [ ] GET /api/v1/embassies - List embassies
-  - [ ] POST /api/v1/embassies - Create embassy (admin)
-  - [ ] GET /api/v1/embassies/:id - Get embassy details
-  - [ ] GET /api/v1/departments - List departments
-  - [ ] POST /api/v1/departments - Create department (admin)
+- [x] **TASK-202**: Create embassy routes (`src/routes/embassy.routes.ts`)
+  - [x] GET /api/v1/embassies - List embassies
+  - [x] POST /api/v1/embassies - Create embassy (admin)
+  - [x] GET /api/v1/embassies/:id - Get embassy details
+  - [x] GET /api/v1/departments - List departments
+  - [x] POST /api/v1/departments - Create department (admin)
+  - **Note**: Also includes PUT/DELETE for both, GET /embassies/:embassyId/departments, PUT/DELETE /departments/:id.
   - **Acceptance Criteria**: FR-03.1, FR-03.2, FR-03.3
   - **Dependencies**: TASK-201
   - **Estimated**: 2 hours
 
-- [ ] **TASK-203**: Create embassy context middleware (`src/middleware/embassy.middleware.ts`)
-  - [ ] Extract embassy context from request (header/user association)
+- [x] **TASK-203**: Create embassy context middleware (`src/middleware/embassy.middleware.ts`)
+  - [x] Extract embassy context from request (header/user association)
   - [ ] Filter services by embassy context
+  - **Note**: Resolves embassy from `x-embassy-code` header with permission validation. Service filtering by context not yet wired into routes.
   - **Acceptance Criteria**: FR-03.3
   - **Dependencies**: TASK-108
   - **Estimated**: 2 hours
 
 #### Week 4: Service Type & Request Management
 
-- [ ] **TASK-204**: Create service type service (`src/services/service-type.service.ts`)
-  - [ ] ServiceType CRUD (admin)
-  - [ ] Fee and duration management
-  - [ ] Category and appointment requirement management
+- [x] **TASK-204**: Create service type service (`src/services/service-type.service.ts`)
+  - [x] ServiceType CRUD (admin)
+  - [x] Fee and duration management
+  - [x] Category and appointment requirement management
+  - **Note**: Full CRUD with audit logging, delete blocked on existing service requests.
   - **Acceptance Criteria**: FR-04.1
   - **Dependencies**: TASK-201
   - **Estimated**: 4 hours
 
-- [ ] **TASK-205**: Create service type routes (`src/routes/service-type.routes.ts`)
-  - [ ] GET /api/v1/service-types - List service types
-  - [ ] POST /api/v1/service-types - Create service type (admin)
+- [x] **TASK-205**: Create service type routes (`src/routes/service-type.routes.ts`)
+  - [x] GET /api/v1/service-types - List service types
+  - [x] POST /api/v1/service-types - Create service type (admin)
+  - **Note**: Also includes GET/PUT/DELETE /:id, GET /category/:category.
   - **Acceptance Criteria**: FR-04.1
   - **Dependencies**: TASK-204
   - **Estimated**: 2 hours
 
-- [ ] **TASK-206**: Create service request service (`src/services/service-request.service.ts`)
-  - [ ] ServiceRequest submission (citizen) with reference number
-  - [ ] Status transitions: DRAFT → SUBMITTED → IN_PROGRESS → COMPLETED/CLOSED/CANCELLED
+- [x] **TASK-206**: Create service request service (`src/services/service-request.service.ts`)
+  - [x] ServiceRequest submission (citizen) with reference number
+  - [x] Status transitions: DRAFT → SUBMITTED → IN_PROGRESS → COMPLETED/CLOSED/CANCELLED
   - [ ] Payment record creation when required
-  - [ ] Audit log integration
+  - [x] Audit log integration
+  - **Note**: Reference number format `SR-{timestamp36}-{hex16}` with 64-bit entropy via randomBytes(8). Payment record creation not yet integrated.
   - **Acceptance Criteria**: FR-04.2, FR-04.3, FR-04.4, FR-04.5, FR-04.6
   - **Dependencies**: TASK-204, TASK-113
   - **Estimated**: 6 hours
 
-- [ ] **TASK-207**: Create service request routes (`src/routes/service-request.routes.ts`)
-  - [ ] POST /api/v1/service-requests - Submit service request
-  - [ ] GET /api/v1/service-requests - List requests (filtered by user/context)
-  - [ ] GET /api/v1/service-requests/:id - Get request details
-  - [ ] PUT /api/v1/service-requests/:id/status - Update status (officer)
+- [x] **TASK-207**: Create service request routes (`src/routes/service-request.routes.ts`)
+  - [x] POST /api/v1/service-requests - Submit service request
+  - [x] GET /api/v1/service-requests - List requests (filtered by user/context)
+  - [x] GET /api/v1/service-requests/:id - Get request details
+  - [x] PUT /api/v1/service-requests/:id/status - Update status (officer)
+  - **Note**: Data leakage prevention via `service-request:read-all` permission. Users without it see only their own requests.
   - **Acceptance Criteria**: FR-04.2, FR-04.3, FR-04.4, FR-04.5
   - **Dependencies**: TASK-206
   - **Estimated**: 3 hours
@@ -684,8 +691,9 @@ Phase 5 (Weeks 12-13)
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|
-| Phase 1 Complete (Auth, RBAC, Audit) | Week 2 | 🔄 In Progress (mostly done, some gaps) |
-| Phase 2 Complete (Embassy, Services, Profiles) | Week 5 | ⏳ Pending |
+| Phase 1 Complete (Auth, RBAC, Audit) | Week 2 | ✅ Complete |
+| Phase 2 (Weeks 3-4) Complete (Embassy, Dept, ServiceType, ServiceRequest) | Week 4 | ✅ Complete |
+| Phase 2 (Week 5) Complete (Citizen Profile) | Week 5 | ⏳ Pending |
 | Phase 3 Complete (Visa, Appointments) | Week 8 | ⏳ Pending |
 | Phase 4 Complete (Legalization, Emergency, Diplomatic, Financial) | Week 11 | ⏳ Pending |
 | Phase 5 Complete (Testing, Security, Docs) | Week 13 | ⏳ Pending |
@@ -706,5 +714,5 @@ Phase 5 (Weeks 12-13)
 ---
 
 *Last Updated: 2026-07-27*
-*Current Phase: Phase 1 (Weeks 1-2) - Server Infrastructure & Auth Module (mostly complete)*
-*Next Task: TASK-108 (RBAC middleware), TASK-113 (Audit service), TASK-115 (Audit routes), or Phase 2 tasks*
+*Current Phase: Phase 2 (Weeks 3-4) — Embassy, Services, Requests complete. Week 5 (Citizen Profile) pending.*
+*Next Task: TASK-208 (Profile service) or Phase 3 tasks*

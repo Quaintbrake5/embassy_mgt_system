@@ -34,6 +34,8 @@ export type ProfileMinAggregateOutputType = {
   state: string | null
   country: string | null
   postalCode: string | null
+  createdAt: Date | null
+  Updated: Date | null
 }
 
 export type ProfileMaxAggregateOutputType = {
@@ -46,6 +48,8 @@ export type ProfileMaxAggregateOutputType = {
   state: string | null
   country: string | null
   postalCode: string | null
+  createdAt: Date | null
+  Updated: Date | null
 }
 
 export type ProfileCountAggregateOutputType = {
@@ -58,6 +62,8 @@ export type ProfileCountAggregateOutputType = {
   state: number
   country: number
   postalCode: number
+  createdAt: number
+  Updated: number
   _all: number
 }
 
@@ -72,6 +78,8 @@ export type ProfileMinAggregateInputType = {
   state?: true
   country?: true
   postalCode?: true
+  createdAt?: true
+  Updated?: true
 }
 
 export type ProfileMaxAggregateInputType = {
@@ -84,6 +92,8 @@ export type ProfileMaxAggregateInputType = {
   state?: true
   country?: true
   postalCode?: true
+  createdAt?: true
+  Updated?: true
 }
 
 export type ProfileCountAggregateInputType = {
@@ -96,6 +106,8 @@ export type ProfileCountAggregateInputType = {
   state?: true
   country?: true
   postalCode?: true
+  createdAt?: true
+  Updated?: true
   _all?: true
 }
 
@@ -181,6 +193,8 @@ export type ProfileGroupByOutputType = {
   state: string | null
   country: string | null
   postalCode: string | null
+  createdAt: Date
+  Updated: Date
   _count: ProfileCountAggregateOutputType | null
   _min: ProfileMinAggregateOutputType | null
   _max: ProfileMaxAggregateOutputType | null
@@ -214,6 +228,8 @@ export type ProfileWhereInput = {
   state?: Prisma.StringNullableFilter<"Profile"> | string | null
   country?: Prisma.StringNullableFilter<"Profile"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Profile"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
+  Updated?: Prisma.DateTimeFilter<"Profile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -227,6 +243,8 @@ export type ProfileOrderByWithRelationInput = {
   state?: Prisma.SortOrderInput | Prisma.SortOrder
   country?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  Updated?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -243,6 +261,8 @@ export type ProfileWhereUniqueInput = Prisma.AtLeast<{
   state?: Prisma.StringNullableFilter<"Profile"> | string | null
   country?: Prisma.StringNullableFilter<"Profile"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Profile"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
+  Updated?: Prisma.DateTimeFilter<"Profile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
@@ -256,6 +276,8 @@ export type ProfileOrderByWithAggregationInput = {
   state?: Prisma.SortOrderInput | Prisma.SortOrder
   country?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  Updated?: Prisma.SortOrder
   _count?: Prisma.ProfileCountOrderByAggregateInput
   _max?: Prisma.ProfileMaxOrderByAggregateInput
   _min?: Prisma.ProfileMinOrderByAggregateInput
@@ -274,6 +296,8 @@ export type ProfileScalarWhereWithAggregatesInput = {
   state?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
   country?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
   postalCode?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Profile"> | Date | string
+  Updated?: Prisma.DateTimeWithAggregatesFilter<"Profile"> | Date | string
 }
 
 export type ProfileCreateInput = {
@@ -285,6 +309,8 @@ export type ProfileCreateInput = {
   state?: string | null
   country?: string | null
   postalCode?: string | null
+  createdAt?: Date | string
+  Updated?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutProfileInput
 }
 
@@ -298,6 +324,8 @@ export type ProfileUncheckedCreateInput = {
   state?: string | null
   country?: string | null
   postalCode?: string | null
+  createdAt?: Date | string
+  Updated?: Date | string
 }
 
 export type ProfileUpdateInput = {
@@ -309,6 +337,8 @@ export type ProfileUpdateInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutProfileNestedInput
 }
 
@@ -322,6 +352,8 @@ export type ProfileUncheckedUpdateInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProfileCreateManyInput = {
@@ -334,6 +366,8 @@ export type ProfileCreateManyInput = {
   state?: string | null
   country?: string | null
   postalCode?: string | null
+  createdAt?: Date | string
+  Updated?: Date | string
 }
 
 export type ProfileUpdateManyMutationInput = {
@@ -345,6 +379,8 @@ export type ProfileUpdateManyMutationInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProfileUncheckedUpdateManyInput = {
@@ -357,6 +393,8 @@ export type ProfileUncheckedUpdateManyInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProfileNullableScalarRelationFilter = {
@@ -374,6 +412,8 @@ export type ProfileCountOrderByAggregateInput = {
   state?: Prisma.SortOrder
   country?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  Updated?: Prisma.SortOrder
 }
 
 export type ProfileMaxOrderByAggregateInput = {
@@ -386,6 +426,8 @@ export type ProfileMaxOrderByAggregateInput = {
   state?: Prisma.SortOrder
   country?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  Updated?: Prisma.SortOrder
 }
 
 export type ProfileMinOrderByAggregateInput = {
@@ -398,6 +440,8 @@ export type ProfileMinOrderByAggregateInput = {
   state?: Prisma.SortOrder
   country?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  Updated?: Prisma.SortOrder
 }
 
 export type ProfileCreateNestedOneWithoutUserInput = {
@@ -445,6 +489,8 @@ export type ProfileCreateWithoutUserInput = {
   state?: string | null
   country?: string | null
   postalCode?: string | null
+  createdAt?: Date | string
+  Updated?: Date | string
 }
 
 export type ProfileUncheckedCreateWithoutUserInput = {
@@ -456,6 +502,8 @@ export type ProfileUncheckedCreateWithoutUserInput = {
   state?: string | null
   country?: string | null
   postalCode?: string | null
+  createdAt?: Date | string
+  Updated?: Date | string
 }
 
 export type ProfileCreateOrConnectWithoutUserInput = {
@@ -483,6 +531,8 @@ export type ProfileUpdateWithoutUserInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProfileUncheckedUpdateWithoutUserInput = {
@@ -494,6 +544,8 @@ export type ProfileUncheckedUpdateWithoutUserInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -508,6 +560,8 @@ export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   state?: boolean
   country?: boolean
   postalCode?: boolean
+  createdAt?: boolean
+  Updated?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profile"]>
 
@@ -521,6 +575,8 @@ export type ProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   state?: boolean
   country?: boolean
   postalCode?: boolean
+  createdAt?: boolean
+  Updated?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profile"]>
 
@@ -534,6 +590,8 @@ export type ProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   state?: boolean
   country?: boolean
   postalCode?: boolean
+  createdAt?: boolean
+  Updated?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profile"]>
 
@@ -547,9 +605,11 @@ export type ProfileSelectScalar = {
   state?: boolean
   country?: boolean
   postalCode?: boolean
+  createdAt?: boolean
+  Updated?: boolean
 }
 
-export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gender" | "dateOfBirth" | "avatar" | "bio" | "city" | "state" | "country" | "postalCode", ExtArgs["result"]["profile"]>
+export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gender" | "dateOfBirth" | "avatar" | "bio" | "city" | "state" | "country" | "postalCode" | "createdAt" | "Updated", ExtArgs["result"]["profile"]>
 export type ProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -575,6 +635,8 @@ export type $ProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     state: string | null
     country: string | null
     postalCode: string | null
+    createdAt: Date
+    Updated: Date
   }, ExtArgs["result"]["profile"]>
   composites: {}
 }
@@ -1008,6 +1070,8 @@ export interface ProfileFieldRefs {
   readonly state: Prisma.FieldRef<"Profile", 'String'>
   readonly country: Prisma.FieldRef<"Profile", 'String'>
   readonly postalCode: Prisma.FieldRef<"Profile", 'String'>
+  readonly createdAt: Prisma.FieldRef<"Profile", 'DateTime'>
+  readonly Updated: Prisma.FieldRef<"Profile", 'DateTime'>
 }
     
 
