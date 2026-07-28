@@ -6,7 +6,7 @@
 - **Current Phase**: Phase 5 (Weeks 12-13) — Testing, Security Hardening, Documentation
 - **Database**: embassy_mgt_system on localhost:5433
 - **Server Port**: 3010
-- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. ✅ Phase 4 (Weeks 9-11) complete. ✅ Phase 5 testing (Week 12) complete. ⏳ Phase 5 security hardening & doc pending.
+- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. ✅ Phase 4 (Weeks 9-11) complete. ✅ Phase 5 testing (Week 12) complete. ✅ TASK-504 security audit complete. ⏳ TASK-505/506/507/508 pending.
 
 ---
 
@@ -558,14 +558,15 @@
 
 #### Week 13: Security Hardening & Documentation ⏳
 
-- [ ] **TASK-504**: Security audit & hardening
-  - [ ] Dependency audit: `npm audit`
-  - [ ] Penetration testing (OWASP Top 10)
-  - [ ] Rate limiting validation
-  - [ ] CORS configuration validation
-  - [ ] TLS configuration validation
-  - [ ] JWT token security review
-  - [ ] Encryption at rest verification
+- [x] **TASK-504**: Security audit & hardening ✅
+  - [x] Dependency audit: `npm audit` — 0 critical, 21 high (all in Jest dev chain, accepted risk)
+  - [x] OWASP Top 10 audit — 29 findings across all 10 categories, 2 critical + 2 high fixed
+  - [x] Rate limiting validation — 100/min general + 20/15min auth, all endpoints covered
+  - [x] CORS configuration — env-configured origin, safe dev fallback, credentials enabled
+  - [x] TLS/SSL — conditional `sslmode=require` via `DATABASE_SSL` env var added to PostgreSQL adapter
+  - [x] JWT security review — 15min access + 7d refresh, rotation on use, placeholder secrets flagged for production
+  - [x] Encryption at rest — AES-256-GCM verified, bcrypt 12 rounds confirmed, scrypt key derivation (hardcoded salt flagged)
+  - [x] **6 fixes applied**: RBAC on user/permission/audit/appointment routes, removed `/test` debug endpoint, fixed `crypto.timingSafeEqual` for unequal-length inputs, moved auditMiddleware before routes (was dead code), added `app.disable('x-powered-by')`, production-safe CSP, removed PrismaClientValidationError message leak, PostgreSQL SSL support
   - **Acceptance Criteria**: NFR-01.1-6
   - **Dependencies**: TASK-503
   - **Estimated**: 8 hours
@@ -704,7 +705,7 @@ Phase 5 (Weeks 12-13)
 ├── TASK-116 → TASK-501 (Unit Tests) ✅
 ├── TASK-501 + TASK-408 → TASK-502 (Integration Tests) ✅
 ├── TASK-502 → TASK-503 (E2E Tests) ✅
-├── TASK-503 → TASK-504 (Security Audit) ⏳
+├── TASK-503 → TASK-504 (Security Audit) ✅
 ├── TASK-503 → TASK-505 (Performance Tests) ⏳
 ├── TASK-113 + TASK-208 → TASK-506 (Compliance Audit) ⏳
 ├── TASK-101 + TASK-113 → TASK-507 (Observability) ⏳
@@ -724,7 +725,8 @@ Phase 5 (Weeks 12-13)
 | Phase 3 Code Review Fixes | July 2026 | ✅ Complete |
 | Phase 4 Complete (Legalization, Emergency, Diplomatic, Financial) | Week 11 | ✅ Complete |
 | Phase 5 Testing Complete | Week 12 | ✅ Complete |
-| Phase 5 Security, Docs | Week 13 | ⏳ In Progress |
+| Phase 5 Security Audit | Week 13 | ✅ Complete |
+| Phase 5 Performance, Docs | Week 13 | ⏳ In Progress |
 | **Project Complete** | **Week 13** | ⏳ Pending |
 
 ---
@@ -743,4 +745,4 @@ Phase 5 (Weeks 12-13)
 
 *Last Updated: 2026-07-28*
 *Current Phase: Phase 5 (Weeks 12-13) — Testing, Security Hardening, Documentation.*
-*Next Task: TASK-504 (Security Audit & Hardening)*
+*Next Task: TASK-505 (Performance Testing)*

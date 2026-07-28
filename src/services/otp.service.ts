@@ -1,4 +1,5 @@
-import { randomBytes, randomInt } from 'crypto';
+import { randomInt } from 'crypto';
+import Redis from 'ioredis';
 
 interface OtpEntry {
   otp: string;
@@ -12,10 +13,11 @@ interface RateLimitEntry {
 
 export interface IOTPService {
   generateOtp(appointmentId: string): Promise<string>;
-  verifyOtp(appointmentId: string, otp: string): boolean;
+  verifyOtp(appointmentId: string, otp: string): Promise<boolean>;
 }
 
 export class OTPService implements IOTPService {
+  private redis: Redis | null;
   private otpStore: Map<string, OtpEntry> = new Map();
   private rateLimitStore: Map<string, RateLimitEntry> = new Map();
   private verifyRateLimitStore: Map<string, RateLimitEntry> = new Map();
@@ -25,6 +27,20 @@ export class OTPService implements IOTPService {
   private static readonly RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
   private static readonly VERIFY_RATE_LIMIT_MAX = 5;
   private static readonly VERIFY_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+  constructor(redisClient?: Redis | null) {
+    this.redis = redisClient || null;
+  }
+
+  private redisAvailable(): boolean {
+    return this.redis !== null && this.redis.status === 'ready';
+  }
+
+  private static readonly RATE_INCR_SCRIPT = `
+    local c = redis.call("INCR", KEYS[1])
+    if c == 1 then redis.call("EXPIRE", KEYS[1], ARGV[1]) end
+    return c
+  `;
 
   private cleanupExpired(): void {
     const now = Date.now();
@@ -46,11 +62,62 @@ export class OTPService implements IOTPService {
   }
 
   async generateOtp(appointmentId: string): Promise<string> {
+    if (this.redisAvailable()) {
+      return this.generateOtpRedis(appointmentId);
+    }
+    return this.generateOtpMemory(appointmentId);
+  }
+
+  async verifyOtp(appointmentId: string, otp: string): Promise<boolean> {
+    if (this.redisAvailable()) {
+      return this.verifyOtpRedis(appointmentId, otp);
+    }
+    return this.verifyOtpMemory(appointmentId, otp);
+  }
+
+  private async generateOtpRedis(appointmentId: string): Promise<string> {
+    const rateKey = `otp:rate:${appointmentId}`;
+    const count = await this.redis!.eval(
+      OTPService.RATE_INCR_SCRIPT,
+      1,
+      rateKey,
+      OTPService.RATE_LIMIT_WINDOW_MS / 1000
+    ) as number;
+    if (count > OTPService.RATE_LIMIT_MAX) {
+      throw new Error('Rate limit exceeded. Maximum 3 OTP generations per hour.');
+    }
+
+    const otp = randomInt(100000, 999999).toString();
+    await this.redis!.setex(`otp:${appointmentId}`, OTPService.OTP_EXPIRY_MS / 1000, otp);
+    return otp;
+  }
+
+  private async verifyOtpRedis(appointmentId: string, otp: string): Promise<boolean> {
+    const verifyKey = `otp:verify:${appointmentId}`;
+    const verifyCount = await this.redis!.eval(
+      OTPService.RATE_INCR_SCRIPT,
+      1,
+      verifyKey,
+      OTPService.VERIFY_RATE_LIMIT_WINDOW_MS / 1000
+    ) as number;
+    if (verifyCount > OTPService.VERIFY_RATE_LIMIT_MAX) {
+      return false;
+    }
+
+    const storedOtp = await this.redis!.get(`otp:${appointmentId}`);
+    if (!storedOtp || storedOtp !== otp) {
+      return false;
+    }
+
+    await this.redis!.del(`otp:${appointmentId}`);
+    return true;
+  }
+
+  private async generateOtpMemory(appointmentId: string): Promise<string> {
     this.cleanupExpired();
 
     const now = Date.now();
-    const rateKey = appointmentId;
-    const rateEntry = this.rateLimitStore.get(rateKey);
+    const rateEntry = this.rateLimitStore.get(appointmentId);
 
     if (rateEntry) {
       if (rateEntry.firstRequest + OTPService.RATE_LIMIT_WINDOW_MS > now) {
@@ -59,10 +126,10 @@ export class OTPService implements IOTPService {
         }
         rateEntry.count++;
       } else {
-        this.rateLimitStore.set(rateKey, { count: 1, firstRequest: now });
+        this.rateLimitStore.set(appointmentId, { count: 1, firstRequest: now });
       }
     } else {
-      this.rateLimitStore.set(rateKey, { count: 1, firstRequest: now });
+      this.rateLimitStore.set(appointmentId, { count: 1, firstRequest: now });
     }
 
     const otp = randomInt(100000, 999999).toString();
@@ -74,7 +141,7 @@ export class OTPService implements IOTPService {
     return otp;
   }
 
-  verifyOtp(appointmentId: string, otp: string): boolean {
+  private verifyOtpMemory(appointmentId: string, otp: string): boolean {
     this.cleanupExpired();
 
     const now = Date.now();

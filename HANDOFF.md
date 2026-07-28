@@ -3,7 +3,7 @@
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete, ✅ Phase 5 Testing (Week 12) Complete
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete, ✅ Phase 5 Testing (Week 12) Complete, ✅ TASK-504 Security Audit Complete
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -423,7 +423,15 @@ npm run prisma:studio
 - [x] **TASK-503**: E2E tests — critical flows: citizen journey (register→profile→request→appointment), visa (apply→vet→decide), emergency (register→alert→evacuate)
 
 #### Security & Performance (Week 13) ⏳
-- [ ] **TASK-504**: Security audit — npm audit, OWASP Top 10, rate limiting/CORS/TLS/JWT review, encryption verification
+- [x] **TASK-504**: Security audit & hardening ✅
+  - [x] Dependency audit: `npm audit` — 0 critical, 21 high (all in Jest dev chain, accepted risk)
+  - [x] OWASP Top 10 audit — 29 findings across all 10 categories, 2 critical + 2 high fixed
+  - [x] Rate limiting validation — 100/min general + 20/15min auth, all endpoints covered
+  - [x] CORS configuration — env-configured origin, safe dev fallback, credentials enabled
+  - [x] TLS/SSL — conditional `sslmode=require` via `DATABASE_SSL` env var added to PostgreSQL adapter
+  - [x] JWT security review — 15min access + 7d refresh, rotation on use, placeholder secrets flagged for production
+  - [x] Encryption at rest — AES-256-GCM verified, bcrypt 12 rounds confirmed, scrypt key derivation (hardcoded salt flagged)
+  - [x] **6 fixes applied**: RBAC on user/permission/audit/appointment routes, removed `/test` debug endpoint, fixed `crypto.timingSafeEqual` for unequal-length inputs, moved auditMiddleware before routes (was dead code), added `app.disable('x-powered-by')`, production-safe CSP, removed PrismaClientValidationError message leak, PostgreSQL SSL support
 - [ ] **TASK-505**: Performance testing — 1000 concurrent users, <200ms p95 API, connection pool validation
 - [ ] **TASK-506**: Compliance audit — GDPR (right to erasure, data portability), Vienna Convention, 7-year audit retention
 - [ ] **TASK-507**: Observability — structured JSON logging, OpenTelemetry tracing, Prometheus metrics, alerting rules
@@ -460,7 +468,7 @@ Phase 2 (✅ Weeks 3-5) → Phase 3 (✅ Weeks 6-8)
 ├── TASK-308 ← TASK-307                       ✅
 └── TASK-309 ← TASK-307                       ✅
 
-Phase 3 → Phase 4 → Phase 5 (✅ Complete → ✅ Testing Complete → ⏳ Security/Docs)
+Phase 3 → Phase 4 → Phase 5 (✅ Complete → ✅ Testing Complete → ⏳ Performance/Docs)
 ├── TASK-401 ← TASK-206, TASK-210                   ✅
 ├── TASK-402 ← TASK-401                              ✅
 ├── TASK-403 ← TASK-112, TASK-309                    ✅
@@ -468,7 +476,11 @@ Phase 3 → Phase 4 → Phase 5 (✅ Complete → ✅ Testing Complete → ⏳ S
 ├── TASK-405 ← TASK-113                              ✅
 ├── TASK-406 ← TASK-405                              ✅
 ├── TASK-407 ← TASK-206, TASK-113                    ✅
-└── TASK-408 ← TASK-407                              ✅
+├── TASK-408 ← TASK-407                              ✅
+├── TASK-501 ← TASK-116                              ✅
+├── TASK-502 ← TASK-501, TASK-408                    ✅
+├── TASK-503 ← TASK-502                              ✅
+├── TASK-504 ← TASK-503                              ✅
 ```
 
 ---

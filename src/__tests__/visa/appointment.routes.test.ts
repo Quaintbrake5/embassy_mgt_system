@@ -50,7 +50,7 @@ jest.mock('../../middleware/validation.middleware', () => ({
 jest.mock('../../services/otp.service', () => ({
   OTPService: jest.fn().mockImplementation(() => ({
     generateOtp: jest.fn().mockResolvedValue('123456'),
-    verifyOtp: jest.fn().mockReturnValue(true),
+    verifyOtp: jest.fn().mockResolvedValue(true),
   })),
 }));
 

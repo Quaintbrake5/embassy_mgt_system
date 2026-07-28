@@ -13,7 +13,7 @@ describe('AppointmentService', () => {
     jest.clearAllMocks();
     mockOtpService = new OTPService() as jest.Mocked<OTPService>;
     mockOtpService.generateOtp = jest.fn().mockResolvedValue('123456');
-    mockOtpService.verifyOtp = jest.fn().mockReturnValue(true);
+    mockOtpService.verifyOtp = jest.fn().mockResolvedValue(true);
     (mockPrisma.appointment as any).findFirst = jest.fn();
     service = new AppointmentService(mockPrisma as any, mockOtpService);
   });
@@ -110,7 +110,7 @@ describe('AppointmentService', () => {
   describe('checkIn', () => {
     it('should check in with valid OTP', async () => {
       mockPrisma.appointment.findUnique.mockResolvedValue(createMockAppointment({ id: 'apt-1', status: 'BOOKED', userId: 'user-1', tokenNumber: 'TK-001' }));
-      mockOtpService.verifyOtp.mockReturnValue(true);
+      mockOtpService.verifyOtp.mockResolvedValue(true);
       mockPrisma.appointment.update.mockResolvedValue(createMockAppointment({ id: 'apt-1', status: 'CHECKED_IN', checkInAt: new Date() }));
       mockPrisma.auditLog.create.mockResolvedValue({ id: 'log-1' });
       const result = await service.checkIn('apt-1', '123456');
@@ -120,7 +120,7 @@ describe('AppointmentService', () => {
 
     it('should reject check-in with invalid OTP', async () => {
       mockPrisma.appointment.findUnique.mockResolvedValue(createMockAppointment({ id: 'apt-1', status: 'BOOKED', userId: 'user-1' }));
-      mockOtpService.verifyOtp.mockReturnValue(false);
+      mockOtpService.verifyOtp.mockResolvedValue(false);
       await expect(service.checkIn('apt-1', 'wrong-otp')).rejects.toThrow('Invalid or expired OTP');
     });
 

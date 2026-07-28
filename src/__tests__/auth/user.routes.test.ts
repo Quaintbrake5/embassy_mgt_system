@@ -5,6 +5,23 @@ import { createMockUser, createMockRole } from '../helpers/factories';
 jest.mock('../../middleware/auth.middleware', () => ({
   authMiddleware: (req: any, _res: any, next: any) => { req.user = { userId: 'user-1', email: 'john@example.com' }; next(); },
 }));
+
+const adminRole = {
+  id: 'role-admin',
+  name: 'Admin',
+  slug: 'admin',
+  description: 'Administrator',
+  createdAt: new Date('2026-01-01'),
+  Updated: new Date('2026-01-01'),
+  rolePermissions: [
+    { permission: { slug: 'user:read', name: 'Read Users' } },
+    { permission: { slug: 'user:create', name: 'Create Users' } },
+    { permission: { slug: 'user:update', name: 'Update Users' } },
+    { permission: { slug: 'user:delete', name: 'Delete Users' } },
+  ],
+};
+
+const adminUser = createMockUser({ roleId: 'role-admin', role: adminRole });
 jest.mock('../../middleware/audit.middleware', () => ({
   auditMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
@@ -34,53 +51,54 @@ describe('User Routes', () => {
   });
   describe('GET /api/v1/users/:id', () => {
     it('should return user by id', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ role: null, profile: null }));
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
       const res = await request(app).get('/api/v1/users/user-1');
       expect(res.status).toBe(200);
     });
     it('should return 404 for nonexistent user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(adminUser)
+        .mockResolvedValueOnce(null);
       const res = await request(app).get('/api/v1/users/nonexistent');
       expect(res.status).toBe(404);
     });
   });
   describe('PUT /api/v1/users/:id', () => {
     it('should update user by id', async () => {
-      const mockUser = createMockUser({ role: null, profile: null });
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.user.update.mockResolvedValue(mockUser);
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+      mockPrisma.user.update.mockResolvedValue(adminUser);
       const res = await request(app).put('/api/v1/users/user-1').send({ firstName: 'Jane' });
       expect(res.status).toBe(200);
     });
   });
   describe('PATCH /api/v1/users/:id/status', () => {
     it('should update user status', async () => {
-      const mockUser = createMockUser({ role: null, profile: null });
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, status: 'SUSPENDED' });
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+      mockPrisma.user.update.mockResolvedValue({ ...adminUser, status: 'SUSPENDED' });
       const res = await request(app).patch('/api/v1/users/user-1/status').send({ status: 'SUSPENDED' });
       expect(res.status).toBe(200);
     });
   });
   describe('PUT /api/v1/users/:id/role', () => {
     it('should assign role to user', async () => {
-      const mockUser = createMockUser({ role: null, profile: null });
       const mockRole = createMockRole();
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
       mockPrisma.role.findUnique.mockResolvedValue(mockRole);
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, roleId: 'role-1', role: mockRole });
+      mockPrisma.user.update.mockResolvedValue({ ...adminUser, roleId: 'role-1', role: mockRole });
       const res = await request(app).put('/api/v1/users/user-1/role').send({ roleId: 'role-1' });
       expect(res.status).toBe(200);
     });
   });
   describe('DELETE /api/v1/users/:id', () => {
     it('should delete user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(createMockUser());
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
       const res = await request(app).delete('/api/v1/users/user-1');
       expect(res.status).toBe(200);
     });
     it('should return 404 for nonexistent user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(adminUser)
+        .mockResolvedValueOnce(null);
       const res = await request(app).delete('/api/v1/users/nonexistent');
       expect(res.status).toBe(404);
     });

@@ -5,8 +5,9 @@ import { validate } from '../middleware/validation.middleware';
 import { RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from '../dto/auth.dto';
 import { AuthService } from '../services/auth.service';
 import { prisma } from '../config/db.config';
+import { redisClient } from '../config/redis.config';
 
-const authService = new AuthService(prisma);
+const authService = new AuthService(prisma, redisClient);
 const authController = new AuthController(authService);
 
 const router = Router();

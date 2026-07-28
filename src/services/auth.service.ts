@@ -4,6 +4,7 @@ import { AuthenticationError, ConflictError, NotFoundError, AuthorizationError }
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.utilities';
 import { hashPassword, comparePassword } from '../utils/bcrypt.utilities';
 import { generateToken, hashToken } from '../utils/crypto.utilities';
+import Redis from 'ioredis';
 
 interface ResetTokenEntry {
   userId: string;
@@ -26,13 +27,21 @@ export interface IAuthService {
 
 export class AuthService implements IAuthService {
   private prisma: PrismaClient;
+  private redis: Redis | null;
   private resetTokens: Map<string, ResetTokenEntry> = new Map();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(prisma: PrismaClient) {
+  constructor(prisma: PrismaClient, redisClient?: Redis | null) {
     this.prisma = prisma;
-    this.cleanupTimer = setInterval(() => this.evictExpiredTokens(), CLEANUP_INTERVAL_MS);
-    this.cleanupTimer.unref();
+    this.redis = redisClient || null;
+    if (!this.redisAvailable()) {
+      this.cleanupTimer = setInterval(() => this.evictExpiredTokens(), CLEANUP_INTERVAL_MS);
+      this.cleanupTimer.unref();
+    }
+  }
+
+  private redisAvailable(): boolean {
+    return this.redis !== null && this.redis.status === 'ready';
   }
 
   private evictExpiredTokens(): void {
@@ -45,7 +54,6 @@ export class AuthService implements IAuthService {
   }
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    // Check if email already exists
     const existingEmail = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -53,7 +61,6 @@ export class AuthService implements IAuthService {
       throw new ConflictError('Email already registered');
     }
 
-    // Check if phone already exists (if provided)
     if (dto.phone) {
       const existingPhone = await this.prisma.user.findUnique({
         where: { phone: dto.phone },
@@ -63,10 +70,8 @@ export class AuthService implements IAuthService {
       }
     }
 
-    // Hash password
     const passwordHash = await hashPassword(dto.password);
 
-    // Create user
     const user = await this.prisma.user.create({
       data: {
         firstName: dto.firstName.trim(),
@@ -80,13 +85,11 @@ export class AuthService implements IAuthService {
     });
 
     const roleId = user.roleId === null ? undefined : user.roleId;
-    // Generate tokens
     const accessToken = signAccessToken({ userId: user.userid, email: user.email, roleId });
     const refreshToken = signRefreshToken({ userId: user.userid });
 
-    // Store refresh token
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     await this.prisma.refreshToken.create({
       data: {
@@ -96,7 +99,6 @@ export class AuthService implements IAuthService {
       },
     });
 
-    // Create audit log
     await this.prisma.auditLog.create({
       data: {
         userId: user.userid,
@@ -127,7 +129,6 @@ export class AuthService implements IAuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
-    // Find user by email
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase().trim() },
       include: { role: true },
@@ -137,13 +138,11 @@ export class AuthService implements IAuthService {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    // Check password
     const isValid = await comparePassword(dto.password, user.passwordHash);
     if (!isValid) {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    // Check user status
     if (user.status === 'SUSPENDED') {
       throw new AuthorizationError('Account suspended');
     }
@@ -152,11 +151,9 @@ export class AuthService implements IAuthService {
     }
 
     const roleId = user.roleId === null ? undefined : user.roleId;
-    // Generate tokens
     const accessToken = signAccessToken({ userId: user.userid, email: user.email, roleId });
     const refreshToken = signRefreshToken({ userId: user.userid });
 
-    // Store refresh token (revoke old ones)
     await this.prisma.refreshToken.updateMany({
       where: { userId: user.userid, isRevoked: false },
       data: { isRevoked: true, revokedAt: new Date() },
@@ -173,13 +170,11 @@ export class AuthService implements IAuthService {
       },
     });
 
-    // Update last login
     await this.prisma.user.update({
       where: { userid: user.userid },
       data: { lastLoginAt: new Date() },
     });
 
-    // Create audit log
     await this.prisma.auditLog.create({
       data: {
         userId: user.userid,
@@ -209,14 +204,12 @@ export class AuthService implements IAuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthResponseDto> {
-    // Verify refresh token
     try {
       verifyRefreshToken(refreshToken);
     } catch (error) {
       throw new AuthenticationError('Invalid refresh token');
     }
 
-    // Check if token exists in DB and is not revoked
     const storedToken = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },
       include: { user: { include: { role: true } } },
@@ -228,12 +221,10 @@ export class AuthService implements IAuthService {
 
     const user = storedToken.user;
 
-    // Check user status
     if (user.status === 'SUSPENDED' || user.status === 'INACTIVE') {
       throw new AuthorizationError('Account suspended or inactive');
     }
 
-    // Rotate refresh token (revoke old, create new)
     await this.prisma.refreshToken.update({
       where: { id: storedToken.id },
       data: { isRevoked: true, revokedAt: new Date() },
@@ -253,7 +244,6 @@ export class AuthService implements IAuthService {
       },
     });
 
-    // Create audit log
     await this.prisma.auditLog.create({
       data: {
         userId: user.userid,
@@ -281,13 +271,11 @@ export class AuthService implements IAuthService {
   }
 
   async logout(userId: string): Promise<void> {
-    // Revoke all refresh tokens for user
     await this.prisma.refreshToken.updateMany({
       where: { userId, isRevoked: false },
       data: { isRevoked: true, revokedAt: new Date() },
     });
 
-    // Create audit log
     await this.prisma.auditLog.create({
       data: {
         userId,
@@ -308,29 +296,24 @@ export class AuthService implements IAuthService {
       throw new NotFoundError('User not found');
     }
 
-    // Verify current password
     const isValid = await comparePassword(dto.currentPassword, user.passwordHash);
     if (!isValid) {
       throw new AuthenticationError('Current password is incorrect');
     }
 
-    // Hash new password
     const newPasswordHash = await hashPassword(dto.newPassword);
 
-    // Update password
     await this.prisma.user.update({
       where: { userid: userId },
       data: { passwordHash: newPasswordHash },
     });
 
-    // Revoke all refresh tokens (force re-login)
     await this.prisma.refreshToken.updateMany({
       where: { userId, isRevoked: false },
       data: { isRevoked: true, revokedAt: new Date() },
     });
 
-    // Create audit log
-await this.prisma.auditLog.create({
+    await this.prisma.auditLog.create({
       data: {
         userId,
         action: 'PASSWORD_CHANGE',
@@ -350,18 +333,23 @@ await this.prisma.auditLog.create({
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
-    if (this.resetTokens.size >= MAX_RESET_TOKENS) {
-      const oldestKey = this.resetTokens.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.resetTokens.delete(oldestKey);
-      }
-    }
-
     const token = generateToken(32);
-    this.resetTokens.set(token, {
-      userId: user.userid,
-      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
-    });
+
+    if (this.redisAvailable()) {
+      await this.redis!.setex(`reset:${token}`, RESET_TOKEN_TTL_MS / 1000, user.userid);
+    } else {
+      if (this.resetTokens.size >= MAX_RESET_TOKENS) {
+        const oldestKey = this.resetTokens.keys().next().value;
+        if (oldestKey !== undefined) {
+          this.resetTokens.delete(oldestKey);
+        }
+      }
+
+      this.resetTokens.set(token, {
+        userId: user.userid,
+        expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      });
+    }
 
     await this.prisma.auditLog.create({
       data: {
@@ -380,15 +368,25 @@ await this.prisma.auditLog.create({
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
-    const entry = this.resetTokens.get(token);
-    if (!entry || entry.expiresAt < new Date()) {
-      throw new AuthenticationError('Invalid or expired reset token');
+    let userId: string | null = null;
+
+    if (this.redisAvailable()) {
+      userId = await this.redis!.get(`reset:${token}`);
+      if (!userId) {
+        throw new AuthenticationError('Invalid or expired reset token');
+      }
+      await this.redis!.del(`reset:${token}`);
+    } else {
+      const entry = this.resetTokens.get(token);
+      if (!entry || entry.expiresAt < new Date()) {
+        throw new AuthenticationError('Invalid or expired reset token');
+      }
+      userId = entry.userId;
+      this.resetTokens.delete(token);
     }
 
-    this.resetTokens.delete(token);
-
     const user = await this.prisma.user.findUnique({
-      where: { userid: entry.userId },
+      where: { userid: userId },
     });
 
     if (!user) {
@@ -398,21 +396,21 @@ await this.prisma.auditLog.create({
     const passwordHash = await hashPassword(newPassword);
 
     await this.prisma.user.update({
-      where: { userid: entry.userId },
+      where: { userid: userId },
       data: { passwordHash },
     });
 
     await this.prisma.refreshToken.updateMany({
-      where: { userId: entry.userId, isRevoked: false },
+      where: { userId, isRevoked: false },
       data: { isRevoked: true, revokedAt: new Date() },
     });
 
     await this.prisma.auditLog.create({
       data: {
-        userId: entry.userId,
+        userId,
         action: 'PASSWORD_RESET',
         entity: 'User',
-        entityId: entry.userId,
+        entityId: userId,
         description: 'Password reset completed',
       },
     });

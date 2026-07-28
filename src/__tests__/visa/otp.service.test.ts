@@ -49,7 +49,7 @@ describe('OTPService', () => {
   describe('verifyOtp', () => {
     it('should verify a valid OTP', async () => {
       await service.generateOtp('appt-4');
-      const result = service.verifyOtp('appt-4', '123456');
+      const result = await service.verifyOtp('appt-4', '123456');
       expect(result).toBe(true);
     });
 
@@ -57,35 +57,35 @@ describe('OTPService', () => {
       jest.useFakeTimers();
       await service.generateOtp('appt-5');
       jest.advanceTimersByTime(5 * 60 * 1000 + 1);
-      const result = service.verifyOtp('appt-5', '123456');
+      const result = await service.verifyOtp('appt-5', '123456');
       expect(result).toBe(false);
       jest.useRealTimers();
     });
 
     it('should reject an invalid OTP', async () => {
       await service.generateOtp('appt-6');
-      const result = service.verifyOtp('appt-6', '000000');
+      const result = await service.verifyOtp('appt-6', '000000');
       expect(result).toBe(false);
     });
 
-    it('should reject OTP for non-existent appointment', () => {
-      const result = service.verifyOtp('nonexistent', '123456');
+    it('should reject OTP for non-existent appointment', async () => {
+      const result = await service.verifyOtp('nonexistent', '123456');
       expect(result).toBe(false);
     });
 
     it('should consume OTP after successful verification', async () => {
       await service.generateOtp('appt-7');
-      service.verifyOtp('appt-7', '123456');
-      const result = service.verifyOtp('appt-7', '123456');
+      await service.verifyOtp('appt-7', '123456');
+      const result = await service.verifyOtp('appt-7', '123456');
       expect(result).toBe(false);
     });
 
     it('should enforce rate limit of 5 verifications per 15 minutes', async () => {
       await service.generateOtp('appt-8');
       for (let i = 0; i < 5; i++) {
-        service.verifyOtp('appt-8', 'wrong-otp');
+        await service.verifyOtp('appt-8', 'wrong-otp');
       }
-      const result = service.verifyOtp('appt-8', '123456');
+      const result = await service.verifyOtp('appt-8', '123456');
       expect(result).toBe(false);
     });
   });

@@ -216,7 +216,7 @@ export class AppointmentService implements IAppointmentService {
       throw new ValidationError(`Cannot check in appointment with status ${appointment.status}. Only BOOKED appointments can be checked in.`);
     }
 
-    const isValid = this.otpService.verifyOtp(appointmentId, otp);
+    const isValid = await this.otpService.verifyOtp(appointmentId, otp);
     if (!isValid) {
       throw new ValidationError('Invalid or expired OTP');
     }

@@ -13,10 +13,18 @@ declare global {
 
 
 const createPrismaClient = () => {
-  const adapter = new PrismaPg({
-
-    connectionString: databaseUrl,
-  })
+  const envAllowsInsecure = process.env.NODE_ENV === 'development';
+  const useSSL = process.env.DATABASE_SSL !== 'false' && !envAllowsInsecure || databaseUrl.includes('sslmode=require');
+  if (!useSSL && !envAllowsInsecure) {
+    console.warn('[DB] WARNING: Connecting to PostgreSQL without SSL. Set DATABASE_SSL=true to confirm.');
+  }
+  const adapter = useSSL
+    ? new PrismaPg({
+        connectionString: `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=require`,
+      })
+    : new PrismaPg({
+        connectionString: databaseUrl,
+      })
 
 return new PrismaClient({
     adapter,

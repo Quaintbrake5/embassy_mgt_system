@@ -32,7 +32,6 @@ export const errorMiddleware = (
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Invalid data provided',
-        details: error.message,
       },
     });
     return;

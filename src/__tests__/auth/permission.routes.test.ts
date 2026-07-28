@@ -1,10 +1,28 @@
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'test-correlation-id') }));
 import { mockPrisma } from '../helpers/mock-db';
-import { createMockPermission } from '../helpers/factories';
+import { createMockPermission, createMockUser } from '../helpers/factories';
 
 jest.mock('../../middleware/auth.middleware', () => ({
   authMiddleware: (req: any, _res: any, next: any) => { req.user = { userId: 'user-1', email: 'john@example.com' }; next(); },
 }));
+
+const adminUser = createMockUser({
+  roleId: 'role-admin',
+  role: {
+    id: 'role-admin',
+    name: 'Admin',
+    slug: 'admin',
+    description: 'Administrator',
+    createdAt: new Date('2026-01-01'),
+    Updated: new Date('2026-01-01'),
+    rolePermissions: [
+      { permission: { slug: 'permission:create', name: 'Create Permission' } },
+      { permission: { slug: 'permission:read', name: 'Read Permission' } },
+      { permission: { slug: 'permission:update', name: 'Update Permission' } },
+      { permission: { slug: 'permission:delete', name: 'Delete Permission' } },
+    ],
+  },
+});
 jest.mock('../../middleware/audit.middleware', () => ({
   auditMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
@@ -15,7 +33,10 @@ jest.mock('../../utils/crypto.utilities', () => ({ generateToken: jest.fn(() => 
 import request from 'supertest';
 import app from '../../server';
 describe('Permission Routes', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+  });
   describe('POST /api/v1/permissions', () => {
     it('should create permission and return 201', async () => {
       mockPrisma.permission.findUnique.mockResolvedValue(null);
