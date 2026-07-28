@@ -56,8 +56,9 @@ function createRedisStore(prefix: string): RedisStore | undefined {
     });
   }
 
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  if (!isDevelopment) {
+  if (redisClient.status === 'connecting') {
+    logger.info('Rate-limit Redis store pending (cold start)', { prefix });
+  } else if (redisClient.status === 'reconnecting' || redisClient.status === 'close') {
     logger.warn('Rate-limit falling back to in-memory store because Redis is unavailable. In production, this means rate limiting is per-process, not global.', { prefix });
   }
 
