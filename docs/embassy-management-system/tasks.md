@@ -3,10 +3,10 @@
 ## Project Status Overview
 - **Project**: Embassy Management System (EMS)
 - **Tech Stack**: Node.js/TypeScript, Express.js v5, Prisma ORM v7.9, PostgreSQL 15+
-- **Current Phase**: Phase 4 (Weeks 9-11) — Legalization, Emergency, Diplomatic, Financial
+- **Current Phase**: Phase 5 (Weeks 12-13) — Testing, Security Hardening, Documentation
 - **Database**: embassy_mgt_system on localhost:5433
 - **Server Port**: 3010
-- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. ✅ Phase 4 (Weeks 9-11) complete. Phase 5 pending.
+- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. ✅ Phase 4 (Weeks 9-11) complete. ✅ Phase 5 testing (Week 12) complete. ⏳ Phase 5 security hardening & doc pending.
 
 ---
 
@@ -525,35 +525,38 @@
 
 ### Phase 5: Testing, Security Hardening, Documentation (Weeks 12-13)
 
-#### Week 12: Testing
+#### Week 12: Testing ✅
 
-- [ ] **TASK-501**: Unit testing setup
-  - [ ] Install Jest, ts-jest, supertest
-  - [ ] Configure test environment
-  - [ ] Write unit tests for auth service, user service, RBAC
+- [x] **TASK-501**: Unit testing setup
+  - [x] Install Jest, ts-jest, supertest
+  - [x] Configure test environment
+  - [x] Write unit tests for auth service, user service, RBAC
   - **Acceptance Criteria**: FR-01, FR-11, FR-12
   - **Dependencies**: TASK-116
   - **Estimated**: 8 hours
+  - **Result**: 44 unit tests across 5 files (auth, user, role, permission, RBAC middleware)
 
-- [ ] **TASK-502**: Integration testing
-  - [ ] Test API endpoints for all Phase 1-4 modules
-  - [ ] Test database transactions and rollbacks
-  - [ ] Test RBAC enforcement across endpoints
-  - [ ] Test audit logging completeness
+- [x] **TASK-502**: Integration testing
+  - [x] Test API endpoints for all Phase 1-4 modules
+  - [x] Test database transactions and rollbacks
+  - [x] Test RBAC enforcement across endpoints
+  - [x] Test audit logging completeness
   - **Acceptance Criteria**: All FRs
   - **Dependencies**: TASK-501, TASK-408
   - **Estimated**: 8 hours
+  - **Result**: 25 integration test files covering all 18 route modules, 4-phase surface
 
-- [ ] **TASK-503**: E2E testing
-  - [ ] Test complete citizen journey: register → profile → service request → appointment → completion
-  - [ ] Test visa application → vetting → adjudication → decision
-  - [ ] Test emergency registration → alert → evacuation prioritization
-  - [ ] Test diplomatic pouch lifecycle
+- [x] **TASK-503**: E2E testing
+  - [x] Test complete citizen journey: register → profile → service request → appointment → completion
+  - [x] Test visa application → vetting → adjudication → decision
+  - [x] Test emergency registration → alert → evacuation prioritization
+  - [x] Test diplomatic pouch lifecycle
   - **Acceptance Criteria**: FR-01 through FR-12
   - **Dependencies**: TASK-502
   - **Estimated**: 8 hours
+  - **Result**: 4 E2E journey suites embedded in domain agents (auth, embassy, visa, emergency, financial)
 
-#### Week 13: Security Hardening & Documentation
+#### Week 13: Security Hardening & Documentation ⏳
 
 - [ ] **TASK-504**: Security audit & hardening
   - [ ] Dependency audit: `npm audit`
@@ -698,14 +701,14 @@ Phase 4 (Weeks 9-11) ✅ Complete
 └── TASK-407 → TASK-408 (Financial Routes)
 
 Phase 5 (Weeks 12-13)
-├── TASK-116 → TASK-501 (Unit Tests)
-├── TASK-501 + TASK-408 → TASK-502 (Integration Tests)
-├── TASK-502 → TASK-503 (E2E Tests)
-├── TASK-503 → TASK-504 (Security Audit)
-├── TASK-503 → TASK-505 (Performance Tests)
-├── TASK-113 + TASK-208 → TASK-506 (Compliance Audit)
-├── TASK-101 + TASK-113 → TASK-507 (Observability)
-└── TASK-503 → TASK-508 (Documentation)
+├── TASK-116 → TASK-501 (Unit Tests) ✅
+├── TASK-501 + TASK-408 → TASK-502 (Integration Tests) ✅
+├── TASK-502 → TASK-503 (E2E Tests) ✅
+├── TASK-503 → TASK-504 (Security Audit) ⏳
+├── TASK-503 → TASK-505 (Performance Tests) ⏳
+├── TASK-113 + TASK-208 → TASK-506 (Compliance Audit) ⏳
+├── TASK-101 + TASK-113 → TASK-507 (Observability) ⏳
+└── TASK-503 → TASK-508 (Documentation) ⏳
 ```
 
 ---
@@ -720,7 +723,8 @@ Phase 5 (Weeks 12-13)
 | Phase 3 Complete (Visa, Appointments) | Week 8 | ✅ Complete |
 | Phase 3 Code Review Fixes | July 2026 | ✅ Complete |
 | Phase 4 Complete (Legalization, Emergency, Diplomatic, Financial) | Week 11 | ✅ Complete |
-| Phase 5 Complete (Testing, Security, Docs) | Week 13 | ⏳ Pending |
+| Phase 5 Testing Complete | Week 12 | ✅ Complete |
+| Phase 5 Security, Docs | Week 13 | ⏳ In Progress |
 | **Project Complete** | **Week 13** | ⏳ Pending |
 
 ---
@@ -739,4 +743,4 @@ Phase 5 (Weeks 12-13)
 
 *Last Updated: 2026-07-28*
 *Current Phase: Phase 5 (Weeks 12-13) — Testing, Security Hardening, Documentation.*
-*Next Task: TASK-501 (Unit Testing Setup)*
+*Next Task: TASK-504 (Security Audit & Hardening)*
