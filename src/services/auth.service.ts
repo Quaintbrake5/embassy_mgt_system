@@ -12,8 +12,10 @@ interface ResetTokenEntry {
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const VERIFICATION_TOKEN_TTL_MS = 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_RESET_TOKENS = 10000;
+const MAX_VERIFICATION_TOKENS = 10000;
 
 export interface IAuthService {
   register(dto: RegisterDto): Promise<AuthResponseDto>;
@@ -23,12 +25,15 @@ export interface IAuthService {
   changePassword(userId: string, dto: ChangePasswordDto): Promise<void>;
   forgotPassword(email: string): Promise<{ message: string; token?: string }>;
   resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
+  sendVerification(userId: string): Promise<{ message: string }>;
+  verifyEmail(token: string): Promise<{ message: string }>;
 }
 
 export class AuthService implements IAuthService {
   private prisma: PrismaClient;
   private redis: Redis | null;
   private resetTokens: Map<string, ResetTokenEntry> = new Map();
+  private verificationTokens: Map<string, { userId: string; expiresAt: Date }> = new Map();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(prisma: PrismaClient, redisClient?: Redis | null) {
@@ -49,6 +54,11 @@ export class AuthService implements IAuthService {
     for (const [key, entry] of this.resetTokens) {
       if (entry.expiresAt.getTime() <= now) {
         this.resetTokens.delete(key);
+      }
+    }
+    for (const [key, entry] of this.verificationTokens) {
+      if (entry.expiresAt.getTime() <= now) {
+        this.verificationTokens.delete(key);
       }
     }
   }
@@ -417,4 +427,82 @@ export class AuthService implements IAuthService {
 
     return { message: 'Password reset successfully' };
   }
+
+
+  async sendVerification(userId: string): Promise<{ message: string }> {
+    const token = generateToken(32)
+
+    if (this.redisAvailable()) {
+      await this.redis!.setex(`verify:${token}`, VERIFICATION_TOKEN_TTL_MS / 1000, userId)
+    } else {
+      if (this.verificationTokens.size >= MAX_VERIFICATION_TOKENS) {
+        const oldestKey = this.verificationTokens.keys().next().value;
+        if (oldestKey !== undefined) {
+          this.verificationTokens.delete(oldestKey);
+        }
+      }
+
+      this.verificationTokens.set(token, {
+        userId,
+        expiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+      })
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'VERIFICATION_EMAIL_SENT',
+        entity: 'User',
+        entityId: userId,
+        description: 'Verification email sent',
+      },
+    })
+
+    return { message: 'Verification email sent' }
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    let userId: string | null = null
+
+    if (this.redisAvailable()) {
+      userId = await this.redis!.get(`verify:${token}`)
+      if (!userId) {
+        throw new AuthenticationError('Invalid or expired verification token')
+      }
+      await this.redis!.del(`verify:${token}`)
+    } else {
+      const entry = this.verificationTokens.get(token)
+      if (!entry || entry.expiresAt < new Date()) {
+        throw new AuthenticationError('Invalid or expired verification token')
+      }
+      userId = entry.userId
+      this.verificationTokens.delete(token)
+    }
+
+    const currentUser = await this.prisma.user.findUnique({
+      where: { userid: userId },
+      select: { status: true },
+    })
+
+    await this.prisma.user.update({
+      where: { userid: userId },
+      data: {
+        emailVerified: true,
+        ...(currentUser?.status === 'PENDING' ? { status: 'ACTIVE' } : {}),
+      },
+    })
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'EMAIL_VERIFIED',
+        entity: 'User',
+        entityId: userId,
+        description: 'Email verified successfully',
+      },
+    })
+
+    return { message: 'Email verified successfully' }
+  }
+
 }

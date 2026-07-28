@@ -240,7 +240,7 @@ export type UserWhereInput = {
   Updated?: Prisma.DateTimeFilter<"User"> | Date | string
   audit?: Prisma.AuditLogListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.ProfileWhereInput> | null
-  token?: Prisma.XOR<Prisma.RefreshTokenNullableScalarRelationFilter, Prisma.RefreshTokenWhereInput> | null
+  tokens?: Prisma.RefreshTokenListRelationFilter
   role?: Prisma.XOR<Prisma.RoleNullableScalarRelationFilter, Prisma.RoleWhereInput> | null
   appointments?: Prisma.AppointmentListRelationFilter
   serviceRequests?: Prisma.ServiceRequestListRelationFilter
@@ -270,7 +270,7 @@ export type UserOrderByWithRelationInput = {
   Updated?: Prisma.SortOrder
   audit?: Prisma.AuditLogOrderByRelationAggregateInput
   profile?: Prisma.ProfileOrderByWithRelationInput
-  token?: Prisma.RefreshTokenOrderByWithRelationInput
+  tokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
   role?: Prisma.RoleOrderByWithRelationInput
   appointments?: Prisma.AppointmentOrderByRelationAggregateInput
   serviceRequests?: Prisma.ServiceRequestOrderByRelationAggregateInput
@@ -303,7 +303,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   Updated?: Prisma.DateTimeFilter<"User"> | Date | string
   audit?: Prisma.AuditLogListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.ProfileWhereInput> | null
-  token?: Prisma.XOR<Prisma.RefreshTokenNullableScalarRelationFilter, Prisma.RefreshTokenWhereInput> | null
+  tokens?: Prisma.RefreshTokenListRelationFilter
   role?: Prisma.XOR<Prisma.RoleNullableScalarRelationFilter, Prisma.RoleWhereInput> | null
   appointments?: Prisma.AppointmentListRelationFilter
   serviceRequests?: Prisma.ServiceRequestListRelationFilter
@@ -368,7 +368,7 @@ export type UserCreateInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -398,7 +398,7 @@ export type UserUncheckedCreateInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -426,7 +426,7 @@ export type UserUpdateInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -456,7 +456,7 @@ export type UserUncheckedUpdateInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -659,18 +659,18 @@ export type UserUpdateOneRequiredWithoutProfileNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProfileInput, Prisma.UserUpdateWithoutProfileInput>, Prisma.UserUncheckedUpdateWithoutProfileInput>
 }
 
-export type UserCreateNestedOneWithoutTokenInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTokenInput, Prisma.UserUncheckedCreateWithoutTokenInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTokenInput
+export type UserCreateNestedOneWithoutTokensInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTokensInput, Prisma.UserUncheckedCreateWithoutTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTokensInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutTokenNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTokenInput, Prisma.UserUncheckedCreateWithoutTokenInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTokenInput
-  upsert?: Prisma.UserUpsertWithoutTokenInput
+export type UserUpdateOneRequiredWithoutTokensNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTokensInput, Prisma.UserUncheckedCreateWithoutTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTokensInput
+  upsert?: Prisma.UserUpsertWithoutTokensInput
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTokenInput, Prisma.UserUpdateWithoutTokenInput>, Prisma.UserUncheckedUpdateWithoutTokenInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTokensInput, Prisma.UserUpdateWithoutTokensInput>, Prisma.UserUncheckedUpdateWithoutTokensInput>
 }
 
 export type UserCreateNestedOneWithoutAuditInput = {
@@ -861,7 +861,7 @@ export type UserCreateWithoutRoleInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationCreateNestedManyWithoutUserInput
@@ -889,7 +889,7 @@ export type UserUncheckedCreateWithoutRoleInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -960,7 +960,7 @@ export type UserCreateWithoutProfileInput = {
   createdAt?: Date | string
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -989,7 +989,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   createdAt?: Date | string
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -1032,7 +1032,7 @@ export type UserUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -1061,7 +1061,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -1075,7 +1075,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   watchlistEntries?: Prisma.WatchlistEntryUncheckedUpdateManyWithoutListedByUserNestedInput
 }
 
-export type UserCreateWithoutTokenInput = {
+export type UserCreateWithoutTokensInput = {
   userid?: string
   firstName: string
   lastName: string
@@ -1103,7 +1103,7 @@ export type UserCreateWithoutTokenInput = {
   watchlistEntries?: Prisma.WatchlistEntryCreateNestedManyWithoutListedByUserInput
 }
 
-export type UserUncheckedCreateWithoutTokenInput = {
+export type UserUncheckedCreateWithoutTokensInput = {
   userid?: string
   firstName: string
   lastName: string
@@ -1131,23 +1131,23 @@ export type UserUncheckedCreateWithoutTokenInput = {
   watchlistEntries?: Prisma.WatchlistEntryUncheckedCreateNestedManyWithoutListedByUserInput
 }
 
-export type UserCreateOrConnectWithoutTokenInput = {
+export type UserCreateOrConnectWithoutTokensInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutTokenInput, Prisma.UserUncheckedCreateWithoutTokenInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTokensInput, Prisma.UserUncheckedCreateWithoutTokensInput>
 }
 
-export type UserUpsertWithoutTokenInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutTokenInput, Prisma.UserUncheckedUpdateWithoutTokenInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutTokenInput, Prisma.UserUncheckedCreateWithoutTokenInput>
+export type UserUpsertWithoutTokensInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTokensInput, Prisma.UserUncheckedUpdateWithoutTokensInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTokensInput, Prisma.UserUncheckedCreateWithoutTokensInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutTokenInput = {
+export type UserUpdateToOneWithWhereWithoutTokensInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutTokenInput, Prisma.UserUncheckedUpdateWithoutTokenInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTokensInput, Prisma.UserUncheckedUpdateWithoutTokensInput>
 }
 
-export type UserUpdateWithoutTokenInput = {
+export type UserUpdateWithoutTokensInput = {
   userid?: Prisma.StringFieldUpdateOperationsInput | string
   firstName?: Prisma.StringFieldUpdateOperationsInput | string
   lastName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1175,7 +1175,7 @@ export type UserUpdateWithoutTokenInput = {
   watchlistEntries?: Prisma.WatchlistEntryUpdateManyWithoutListedByUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutTokenInput = {
+export type UserUncheckedUpdateWithoutTokensInput = {
   userid?: Prisma.StringFieldUpdateOperationsInput | string
   firstName?: Prisma.StringFieldUpdateOperationsInput | string
   lastName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1216,7 +1216,7 @@ export type UserCreateWithoutAuditInput = {
   createdAt?: Date | string
   Updated?: Date | string
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -1245,7 +1245,7 @@ export type UserUncheckedCreateWithoutAuditInput = {
   createdAt?: Date | string
   Updated?: Date | string
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -1288,7 +1288,7 @@ export type UserUpdateWithoutAuditInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -1317,7 +1317,7 @@ export type UserUncheckedUpdateWithoutAuditInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -1345,7 +1345,7 @@ export type UserCreateWithoutServiceRequestsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationCreateNestedManyWithoutUserInput
@@ -1374,7 +1374,7 @@ export type UserUncheckedCreateWithoutServiceRequestsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1417,7 +1417,7 @@ export type UserUpdateWithoutServiceRequestsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUpdateManyWithoutUserNestedInput
@@ -1446,7 +1446,7 @@ export type UserUncheckedUpdateWithoutServiceRequestsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1473,7 +1473,7 @@ export type UserCreateWithoutVisaApplicationsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -1502,7 +1502,7 @@ export type UserUncheckedCreateWithoutVisaApplicationsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1545,7 +1545,7 @@ export type UserUpdateWithoutVisaApplicationsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -1574,7 +1574,7 @@ export type UserUncheckedUpdateWithoutVisaApplicationsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1601,7 +1601,7 @@ export type UserCreateWithoutDecisionsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -1630,7 +1630,7 @@ export type UserUncheckedCreateWithoutDecisionsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -1662,7 +1662,7 @@ export type UserCreateWithoutSecondaryDecisionsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -1691,7 +1691,7 @@ export type UserUncheckedCreateWithoutSecondaryDecisionsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -1734,7 +1734,7 @@ export type UserUpdateWithoutDecisionsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -1763,7 +1763,7 @@ export type UserUncheckedUpdateWithoutDecisionsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -1801,7 +1801,7 @@ export type UserUpdateWithoutSecondaryDecisionsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -1830,7 +1830,7 @@ export type UserUncheckedUpdateWithoutSecondaryDecisionsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -1857,7 +1857,7 @@ export type UserCreateWithoutAppointmentsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationCreateNestedManyWithoutUserInput
@@ -1886,7 +1886,7 @@ export type UserUncheckedCreateWithoutAppointmentsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1929,7 +1929,7 @@ export type UserUpdateWithoutAppointmentsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUpdateManyWithoutUserNestedInput
@@ -1958,7 +1958,7 @@ export type UserUncheckedUpdateWithoutAppointmentsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1985,7 +1985,7 @@ export type UserCreateWithoutPaymentsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2014,7 +2014,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2057,7 +2057,7 @@ export type UserUpdateWithoutPaymentsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2086,7 +2086,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2113,7 +2113,7 @@ export type UserCreateWithoutVerificationsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2142,7 +2142,7 @@ export type UserUncheckedCreateWithoutVerificationsInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2185,7 +2185,7 @@ export type UserUpdateWithoutVerificationsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2214,7 +2214,7 @@ export type UserUncheckedUpdateWithoutVerificationsInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2241,7 +2241,7 @@ export type UserCreateWithoutWatchlistEntriesInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2270,7 +2270,7 @@ export type UserUncheckedCreateWithoutWatchlistEntriesInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2313,7 +2313,7 @@ export type UserUpdateWithoutWatchlistEntriesInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2342,7 +2342,7 @@ export type UserUncheckedUpdateWithoutWatchlistEntriesInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2369,7 +2369,7 @@ export type UserCreateWithoutEmergencyCasesInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2398,7 +2398,7 @@ export type UserUncheckedCreateWithoutEmergencyCasesInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2441,7 +2441,7 @@ export type UserUpdateWithoutEmergencyCasesInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2470,7 +2470,7 @@ export type UserUncheckedUpdateWithoutEmergencyCasesInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2497,7 +2497,7 @@ export type UserCreateWithoutStaffClearanceInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2526,7 +2526,7 @@ export type UserUncheckedCreateWithoutStaffClearanceInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2558,7 +2558,7 @@ export type UserCreateWithoutClearancesIssuedInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   role?: Prisma.RoleCreateNestedOneWithoutUserInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestCreateNestedManyWithoutUserInput
@@ -2587,7 +2587,7 @@ export type UserUncheckedCreateWithoutClearancesIssuedInput = {
   Updated?: Date | string
   audit?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
-  token?: Prisma.RefreshTokenUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
   serviceRequests?: Prisma.ServiceRequestUncheckedCreateNestedManyWithoutUserInput
   visaApplications?: Prisma.VisaApplicationUncheckedCreateNestedManyWithoutUserInput
@@ -2630,7 +2630,7 @@ export type UserUpdateWithoutStaffClearanceInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2659,7 +2659,7 @@ export type UserUncheckedUpdateWithoutStaffClearanceInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2697,7 +2697,7 @@ export type UserUpdateWithoutClearancesIssuedInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   role?: Prisma.RoleUpdateOneWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
@@ -2726,7 +2726,7 @@ export type UserUncheckedUpdateWithoutClearancesIssuedInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2767,7 +2767,7 @@ export type UserUpdateWithoutRoleInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUpdateManyWithoutUserNestedInput
@@ -2795,7 +2795,7 @@ export type UserUncheckedUpdateWithoutRoleInput = {
   Updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   audit?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
-  token?: Prisma.RefreshTokenUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
   serviceRequests?: Prisma.ServiceRequestUncheckedUpdateManyWithoutUserNestedInput
   visaApplications?: Prisma.VisaApplicationUncheckedUpdateManyWithoutUserNestedInput
@@ -2830,6 +2830,7 @@ export type UserUncheckedUpdateManyWithoutRoleInput = {
 
 export type UserCountOutputType = {
   audit: number
+  tokens: number
   appointments: number
   serviceRequests: number
   visaApplications: number
@@ -2844,6 +2845,7 @@ export type UserCountOutputType = {
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   audit?: boolean | UserCountOutputTypeCountAuditArgs
+  tokens?: boolean | UserCountOutputTypeCountTokensArgs
   appointments?: boolean | UserCountOutputTypeCountAppointmentsArgs
   serviceRequests?: boolean | UserCountOutputTypeCountServiceRequestsArgs
   visaApplications?: boolean | UserCountOutputTypeCountVisaApplicationsArgs
@@ -2871,6 +2873,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
  */
 export type UserCountOutputTypeCountAuditArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AuditLogWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RefreshTokenWhereInput
 }
 
 /**
@@ -2959,7 +2968,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   Updated?: boolean
   audit?: boolean | Prisma.User$auditArgs<ExtArgs>
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
-  token?: boolean | Prisma.User$tokenArgs<ExtArgs>
+  tokens?: boolean | Prisma.User$tokensArgs<ExtArgs>
   role?: boolean | Prisma.User$roleArgs<ExtArgs>
   appointments?: boolean | Prisma.User$appointmentsArgs<ExtArgs>
   serviceRequests?: boolean | Prisma.User$serviceRequestsArgs<ExtArgs>
@@ -3026,7 +3035,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   audit?: boolean | Prisma.User$auditArgs<ExtArgs>
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
-  token?: boolean | Prisma.User$tokenArgs<ExtArgs>
+  tokens?: boolean | Prisma.User$tokensArgs<ExtArgs>
   role?: boolean | Prisma.User$roleArgs<ExtArgs>
   appointments?: boolean | Prisma.User$appointmentsArgs<ExtArgs>
   serviceRequests?: boolean | Prisma.User$serviceRequestsArgs<ExtArgs>
@@ -3053,7 +3062,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     audit: Prisma.$AuditLogPayload<ExtArgs>[]
     profile: Prisma.$ProfilePayload<ExtArgs> | null
-    token: Prisma.$RefreshTokenPayload<ExtArgs> | null
+    tokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
     role: Prisma.$RolePayload<ExtArgs> | null
     appointments: Prisma.$AppointmentPayload<ExtArgs>[]
     serviceRequests: Prisma.$ServiceRequestPayload<ExtArgs>[]
@@ -3476,7 +3485,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   audit<T extends Prisma.User$auditArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   profile<T extends Prisma.User$profileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileArgs<ExtArgs>>): Prisma.Prisma__ProfileClient<runtime.Types.Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  token<T extends Prisma.User$tokenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tokenArgs<ExtArgs>>): Prisma.Prisma__RefreshTokenClient<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  tokens<T extends Prisma.User$tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role<T extends Prisma.User$roleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$roleArgs<ExtArgs>>): Prisma.Prisma__RoleClient<runtime.Types.Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   appointments<T extends Prisma.User$appointmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$appointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   serviceRequests<T extends Prisma.User$serviceRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$serviceRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3974,9 +3983,9 @@ export type User$profileArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 }
 
 /**
- * User.token
+ * User.tokens
  */
-export type User$tokenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the RefreshToken
    */
@@ -3990,6 +3999,11 @@ export type User$tokenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   include?: Prisma.RefreshTokenInclude<ExtArgs> | null
   where?: Prisma.RefreshTokenWhereInput
+  orderBy?: Prisma.RefreshTokenOrderByWithRelationInput | Prisma.RefreshTokenOrderByWithRelationInput[]
+  cursor?: Prisma.RefreshTokenWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RefreshTokenScalarFieldEnum | Prisma.RefreshTokenScalarFieldEnum[]
 }
 
 /**

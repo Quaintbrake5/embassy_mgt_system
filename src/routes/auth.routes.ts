@@ -1,16 +1,24 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware, authenticatedUserMiddleware } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validation.middleware';
-import { RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from '../dto/auth.dto';
+import { RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../dto/auth.dto';
 import { AuthService } from '../services/auth.service';
 import { prisma } from '../config/db.config';
 import { redisClient } from '../config/redis.config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const rateLimit = require('express-rate-limit');
 
 const authService = new AuthService(prisma, redisClient);
 const authController = new AuthController(authService);
 
 const router = Router();
+
+const verifyEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many verification attempts, please try again later' } },
+});
 
 // Public routes
 router.post('/register', validate(RegisterDto), authController.register);
@@ -22,5 +30,8 @@ router.post('/reset-password', validate(ResetPasswordDto), authController.resetP
 // Protected routes
 router.post('/logout', authMiddleware, authController.logout);
 router.post('/change-password', authMiddleware, validate(ChangePasswordDto), authController.changePassword);
+
+router.post('/send-verification', authenticatedUserMiddleware, authController.sendVerification)
+router.post('/verify-email', verifyEmailLimiter, validate(VerifyEmailDto), authController.verifyEmail)
 
 export default router;

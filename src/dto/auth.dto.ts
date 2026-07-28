@@ -221,6 +221,32 @@ export class ResetPasswordDto {
   }
 }
 
+
+export class SendVerificationDto {
+  static sanitize(body: Record<string, unknown>): Record<string, unknown> {
+    return {}
+  }
+
+  static validate(_sanitized: Record<string, unknown>): string[] {
+    return []
+  }
+}
+
+export class VerifyEmailDto {
+  token!: string
+
+  static sanitize(body: Record<string, unknown>): Record<string, unknown> {
+    return { token: typeof body.token === 'string' ? body.token.trim() : '' }
+  }
+
+  static validate(sanitized: Record<string, unknown>): string[] {
+    const errors: string[] = []
+    if (!sanitized.token) errors.push('Verification token is required')
+    else if (typeof sanitized.token !== 'string' || sanitized.token.length < 32)
+      errors.push('Invalid verification token')
+    return errors
+  }
+}
 export class AuthResponseDto {
   accessToken!: string;
   refreshToken!: string;

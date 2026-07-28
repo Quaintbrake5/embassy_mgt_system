@@ -18,6 +18,9 @@ const hashToken = (token) => {
 };
 exports.hashToken = hashToken;
 const constantTimeCompare = (a, b) => {
+    if (a.length !== b.length) {
+        return false;
+    }
     return crypto_1.default.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 };
 exports.constantTimeCompare = constantTimeCompare;

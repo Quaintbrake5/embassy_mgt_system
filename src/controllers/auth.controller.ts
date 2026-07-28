@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
-import { RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from '../dto/auth.dto';
+import { RegisterDto, LoginDto, RefreshDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../dto/auth.dto';
 import { ValidationError, AuthenticationError } from '../exceptions';
 
 export class AuthController {
@@ -139,4 +139,25 @@ await this.authService.changePassword(userId, dto);
       next(error);
     }
   };
+  sendVerification = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId
+      if (!userId) throw new AuthenticationError('User not authenticated')
+
+      const result = await this.authService.sendVerification(userId)
+      res.status(201).json({ success: true, data: result })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  verifyEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto = req.body as VerifyEmailDto
+      const result = await this.authService.verifyEmail(dto.token)
+      res.json({ success: true, data: result })
+    } catch (error) {
+      next(error)
+    }
+  }
 }

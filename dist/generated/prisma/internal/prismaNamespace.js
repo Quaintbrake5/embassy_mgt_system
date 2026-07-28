@@ -179,7 +179,9 @@ exports.ProfileScalarFieldEnum = {
     city: 'city',
     state: 'state',
     country: 'country',
-    postalCode: 'postalCode'
+    postalCode: 'postalCode',
+    createdAt: 'createdAt',
+    Updated: 'Updated'
 };
 exports.RefreshTokenScalarFieldEnum = {
     id: 'id',

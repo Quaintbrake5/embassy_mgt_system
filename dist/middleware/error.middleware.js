@@ -1,17 +1,19 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notFoundMiddleware = exports.errorMiddleware = void 0;
 const exceptions_1 = require("../exceptions");
 const client_1 = require("../generated/prisma/client");
-/**
- * Global error handling middleware
- */
+const logger_config_1 = __importDefault(require("../config/logger.config"));
 const errorMiddleware = (error, req, res, next) => {
-    console.error('Error:', {
+    logger_config_1.default.error('Unhandled error', {
         message: error.message,
         stack: error.stack,
         path: req.path,
         method: req.method,
+        correlationId: req.correlationId,
         userId: req.user?.userId,
     });
     // Handle Prisma errors
@@ -26,7 +28,6 @@ const errorMiddleware = (error, req, res, next) => {
             error: {
                 code: 'VALIDATION_ERROR',
                 message: 'Invalid data provided',
-                details: error.message,
             },
         });
         return;
@@ -61,13 +62,13 @@ exports.errorMiddleware = errorMiddleware;
 function handlePrismaError(error, res) {
     switch (error.code) {
         case 'P2002':
-            // Unique constraint violation
             const target = error.meta?.target?.join(', ') || 'field';
+            logger_config_1.default.warn('Unique constraint violation', { target, code: error.code });
             res.status(409).json({
                 success: false,
                 error: {
                     code: 'CONFLICT',
-                    message: `${target} already exists`,
+                    message: 'A record with this value already exists',
                 },
             });
             break;

@@ -183,6 +183,71 @@ class UserService {
         });
         return this.toResponse(user);
     }
+    async updateProfile(userId, dto) {
+        const existing = await this.prisma.user.findUnique({
+            where: { userid: userId },
+        });
+        if (!existing) {
+            throw new exceptions_1.NotFoundError('User not found');
+        }
+        // Strip status and roleId from dto - user cannot change their own status or role
+        const { status, roleId, ...updateData } = dto;
+        // Check email uniqueness if changing
+        if (updateData.email && updateData.email !== existing.email) {
+            const emailExists = await this.prisma.user.findUnique({
+                where: { email: updateData.email.toLowerCase() },
+            });
+            if (emailExists) {
+                throw new exceptions_1.ConflictError('Email already in use');
+            }
+        }
+        // Check phone uniqueness if changing
+        if (updateData.phone && updateData.phone !== existing.phone) {
+            const phoneExists = await this.prisma.user.findUnique({
+                where: { phone: updateData.phone },
+            });
+            if (phoneExists) {
+                throw new exceptions_1.ConflictError('Phone number already in use');
+            }
+        }
+        const user = await this.prisma.user.update({
+            where: { userid: userId },
+            data: {
+                firstName: updateData.firstName?.trim(),
+                lastName: updateData.lastName?.trim(),
+                email: updateData.email?.toLowerCase().trim(),
+                phone: updateData.phone?.trim(),
+            },
+            include: {
+                role: true,
+                profile: true,
+            },
+        });
+        return this.toResponse(user);
+    }
+    async assignRole(userId, roleId) {
+        const existing = await this.prisma.user.findUnique({
+            where: { userid: userId },
+        });
+        if (!existing) {
+            throw new exceptions_1.NotFoundError('User not found');
+        }
+        const role = await this.prisma.role.findUnique({
+            where: { id: roleId },
+        });
+        if (!role) {
+            throw new exceptions_1.NotFoundError('Role not found');
+        }
+        const user = await this.prisma.user.update({
+            where: { userid: userId },
+            data: { roleId },
+            include: {
+                role: true,
+                profile: true,
+            },
+        });
+        return this.toResponse(user);
+    }
     toResponse(user) {
         return {
             userid: user.userid,

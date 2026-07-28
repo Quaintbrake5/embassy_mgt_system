@@ -114,6 +114,40 @@ class UserController {
                 next(error);
             }
         };
+        this.updateProfile = async (req, res, next) => {
+            try {
+                const userId = req.user?.userId;
+                if (!userId) {
+                    throw new Error('User not authenticated');
+                }
+                const dto = req.body;
+                const updated = await this.userService.updateProfile(userId, dto);
+                res.json({
+                    success: true,
+                    data: updated,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.assignRole = async (req, res, next) => {
+            try {
+                const id = req.params.id;
+                const { roleId } = req.body;
+                if (!roleId) {
+                    throw new exceptions_1.ValidationError('Role ID is required');
+                }
+                const updated = await this.userService.assignRole(id, roleId);
+                res.json({
+                    success: true,
+                    data: updated,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.userService = userService;
     }
 }

@@ -7,3 +7,4 @@ node_modules
 server.log
 logs/
 duplication-findings.json
+/frontend/*

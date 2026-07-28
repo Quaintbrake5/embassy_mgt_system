@@ -155,7 +155,7 @@ model User {
   Updated       DateTime      @updatedAt
   audit         AuditLog[]
   profile       Profile?
-  token         RefreshToken?
+  tokens        RefreshToken[]
   role          Role?         @relation(fields: [roleId], references: [id])
   appointments  Appointment[]
   serviceRequests ServiceRequest[]
@@ -225,7 +225,7 @@ model Profile {
 model RefreshToken {
   id        String    @id @default(uuid())
   token     String    @unique
-  userId    String    @unique
+  userId    String
   ipAddress String?
   userAgent String?
   isRevoked Boolean   @default(false)

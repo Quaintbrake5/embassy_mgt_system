@@ -93,6 +93,62 @@ class AuthController {
                 next(error);
             }
         };
+        this.forgotPassword = async (req, res, next) => {
+            try {
+                const dto = auth_dto_1.ForgotPasswordDto.sanitize(req.body);
+                const errors = auth_dto_1.ForgotPasswordDto.validate(dto);
+                if (errors.length > 0) {
+                    throw new exceptions_1.ValidationError('Validation failed', errors);
+                }
+                const result = await this.authService.forgotPassword(dto.email);
+                res.json({
+                    success: true,
+                    data: result,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.resetPassword = async (req, res, next) => {
+            try {
+                const dto = auth_dto_1.ResetPasswordDto.sanitize(req.body);
+                const errors = auth_dto_1.ResetPasswordDto.validate(dto);
+                if (errors.length > 0) {
+                    throw new exceptions_1.ValidationError('Validation failed', errors);
+                }
+                const result = await this.authService.resetPassword(dto.token, dto.newPassword);
+                res.json({
+                    success: true,
+                    data: result,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.sendVerification = async (req, res, next) => {
+            try {
+                const userId = req.user?.userId;
+                if (!userId)
+                    throw new exceptions_1.AuthenticationError('User not authenticated');
+                const result = await this.authService.sendVerification(userId);
+                res.status(201).json({ success: true, data: result });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.verifyEmail = async (req, res, next) => {
+            try {
+                const dto = req.body;
+                const result = await this.authService.verifyEmail(dto.token);
+                res.json({ success: true, data: result });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.authService = authService;
     }
 }

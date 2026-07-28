@@ -158,3 +158,81 @@ export const optionalAuthMiddleware = async (
     next();
   }
 };
+
+/**
+ * Authenticated user middleware
+ * Verifies JWT access token and attaches user to request.
+ * Unlike authMiddleware, it does NOT require ACTIVE status.
+ * Allows PENDING users to access endpoints like send-verification.
+ */
+export const authenticatedUserMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'No token provided',
+        },
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Invalid token format',
+        },
+      });
+      return;
+    }
+
+    const payload = verifyAccessToken(token);
+
+    const user = await prisma.user.findUnique({
+      where: { userid: payload.userId },
+      select: { userid: true, status: true, roleId: true, email: true },
+    });
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'User not found',
+        },
+      });
+      return;
+    }
+
+    req.user = {
+      userId: user.userid,
+      email: user.email,
+      roleId: user.roleId ?? undefined,
+    };
+
+    next();
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Invalid or expired token',
+        },
+      });
+      return;
+    }
+    next(error);
+  }
+};

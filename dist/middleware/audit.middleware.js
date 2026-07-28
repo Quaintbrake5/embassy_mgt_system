@@ -1,31 +1,38 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.auditMiddleware = void 0;
 const db_config_1 = require("../config/db.config");
-/**
- * Audit logging middleware
- * Automatically logs CREATE, UPDATE, DELETE operations
- */
+const audit_service_1 = require("../services/audit.service");
+const logger_config_1 = __importDefault(require("../config/logger.config"));
+const auditService = new audit_service_1.AuditService(db_config_1.prisma);
 const auditMiddleware = async (req, res, next) => {
-    // Only audit mutating methods
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     if (!mutatingMethods.includes(req.method)) {
         return next();
     }
-    // Skip audit for certain paths
-    const skipPaths = ['/auth', '/health'];
+    const skipPaths = ['/health'];
     if (skipPaths.some(path => req.path.startsWith(path))) {
         return next();
     }
-    // Store original send method
+    const entity = extractEntityFromPath(req.path);
+    const entityId = extractEntityIdFromParams(req);
+    const action = extractActionFromMethod(req.method);
+    let oldValues = undefined;
+    if ((req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') && entityId && entityId !== 'unknown') {
+        try {
+            oldValues = await fetchOldValues(req, entity, entityId);
+        }
+        catch {
+            // Best-effort old value capture
+        }
+    }
     const originalSend = res.send;
-    // Override send to capture response
     res.send = function (body) {
-        // Only log on successful responses
         const isSuccess = res.statusCode >= 200 && res.statusCode < 400;
-        const isMutating = mutatingMethods.includes(req.method);
-        if (isSuccess && isMutating && req.user) {
-            // Parse response body
+        if (isSuccess && req.user) {
             let responseData;
             try {
                 responseData = typeof body === 'string' ? JSON.parse(body) : body;
@@ -33,47 +40,39 @@ const auditMiddleware = async (req, res, next) => {
             catch {
                 responseData = body;
             }
-            // Extract entity info from route
-            const entity = extractEntityFromPath(req.path);
-            const action = extractActionFromMethod(req.method);
-            // Log asynchronously (don't block response)
-            logAudit({
+            const resolvedEntityId = extractEntityId(req, responseData) || entityId;
+            const metaData = {
+                method: req.method,
+                path: req.path,
+                query: req.query,
+                body: sanitizeBody(req.body),
+                correlationId: req.correlationId || res.locals.correlationId,
+            };
+            auditService.log({
                 userId: req.user.userId,
                 action,
                 entity,
-                entityId: extractEntityId(req, responseData),
+                entityId: resolvedEntityId,
                 description: `${action} ${entity}`,
                 ipAddress: req.ip,
                 userAgent: req.get('user-agent'),
-                metaData: {
-                    method: req.method,
-                    path: req.path,
-                    query: req.query,
-                    body: sanitizeBody(req.body),
-                },
-            }).catch(console.error);
+                metaData,
+                oldValues,
+                newValues: action === 'DELETE' ? undefined : sanitizeBody(req.body),
+            }).catch((err) => logger_config_1.default.error('Audit log write failed', { error: err }));
         }
-        // Call original send
         return originalSend.call(this, body);
     };
     next();
 };
 exports.auditMiddleware = auditMiddleware;
-/**
- * Extract entity name from request path
- * e.g., /api/v1/users/123 -> User
- */
 function extractEntityFromPath(path) {
     const segments = path.split('/').filter(Boolean);
     const apiIndex = segments.findIndex(s => s === 'api' || s === 'v1');
     const entitySegment = segments[apiIndex + 1] || 'Unknown';
-    // Convert to singular PascalCase
     const singular = entitySegment.replace(/s$/, '');
     return singular.charAt(0).toUpperCase() + singular.slice(1);
 }
-/**
- * Extract action from HTTP method
- */
 function extractActionFromMethod(method) {
     switch (method) {
         case 'POST':
@@ -87,11 +86,7 @@ function extractActionFromMethod(method) {
             return method;
     }
 }
-/**
- * Extract entity ID from request/response
- */
-function extractEntityId(req, responseData) {
-    // From route params - handle Express param types
+function extractEntityIdFromParams(req) {
     const getParam = (name) => {
         const val = req.params[name];
         return Array.isArray(val) ? val[0] : val;
@@ -104,16 +99,38 @@ function extractEntityId(req, responseData) {
         return getParam('roleId');
     if (getParam('permissionId'))
         return getParam('permissionId');
-    // From response data
+    return 'unknown';
+}
+function extractEntityId(req, responseData) {
+    const fromParams = extractEntityIdFromParams(req);
+    if (fromParams !== 'unknown')
+        return fromParams;
     if (responseData?.data?.userid)
         return responseData.data.userid;
     if (responseData?.data?.id)
         return responseData.data.id;
     return 'unknown';
 }
-/**
- * Sanitize request body for logging (remove sensitive fields)
- */
+async function fetchOldValues(req, entity, entityId) {
+    const modelMap = {
+        User: 'user',
+        Role: 'role',
+        Permission: 'permission',
+    };
+    const modelName = modelMap[entity];
+    if (!modelName)
+        return undefined;
+    const record = await db_config_1.prisma[modelName].findUnique({
+        where: { id: entityId },
+    });
+    if (!record) {
+        const altRecord = await db_config_1.prisma[modelName].findUnique({
+            where: { userid: entityId },
+        });
+        return altRecord ? sanitizeBody(altRecord) : undefined;
+    }
+    return sanitizeBody(record);
+}
 function sanitizeBody(body) {
     if (!body || typeof body !== 'object')
         return body;
@@ -125,21 +142,4 @@ function sanitizeBody(body) {
         }
     }
     return sanitized;
-}
-/**
- * Log audit entry
- */
-async function logAudit(data) {
-    await db_config_1.prisma.auditLog.create({
-        data: {
-            userId: data.userId,
-            action: data.action,
-            entity: data.entity,
-            entityId: data.entityId,
-            description: data.description,
-            ipAddress: data.ipAddress,
-            userAgent: data.userAgent,
-            metaData: data.metaData,
-        },
-    });
 }

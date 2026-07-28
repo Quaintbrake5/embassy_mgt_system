@@ -1,40 +1,8 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.optionalAuthMiddleware = exports.authMiddleware = void 0;
+exports.authenticatedUserMiddleware = exports.optionalAuthMiddleware = exports.authMiddleware = void 0;
 const db_config_1 = require("../config/db.config");
+const jwt_utilities_1 = require("../utils/jwt.utilities");
 /**
  * Authentication middleware
  * Verifies JWT access token and attaches user to request
@@ -63,9 +31,7 @@ const authMiddleware = async (req, res, next) => {
             });
             return;
         }
-        // Import jwt utilities dynamically to avoid circular dependency
-        const { verifyAccessToken } = await Promise.resolve().then(() => __importStar(require('../utils/jwt.utilities')));
-        const payload = verifyAccessToken(token);
+        const payload = (0, jwt_utilities_1.verifyAccessToken)(token);
         // Check if user exists and is active
         const user = await db_config_1.prisma.user.findUnique({
             where: { userid: payload.userId },
@@ -140,8 +106,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
             next();
             return;
         }
-        const { verifyAccessToken } = await Promise.resolve().then(() => __importStar(require('../utils/jwt.utilities')));
-        const payload = verifyAccessToken(token);
+        const payload = (0, jwt_utilities_1.verifyAccessToken)(token);
         const user = await db_config_1.prisma.user.findUnique({
             where: { userid: payload.userId },
             select: { userid: true, status: true, roleId: true, email: true },
@@ -161,3 +126,70 @@ const optionalAuthMiddleware = async (req, res, next) => {
     }
 };
 exports.optionalAuthMiddleware = optionalAuthMiddleware;
+/**
+ * Authenticated user middleware
+ * Verifies JWT access token and attaches user to request.
+ * Unlike authMiddleware, it does NOT require ACTIVE status.
+ * Allows PENDING users to access endpoints like send-verification.
+ */
+const authenticatedUserMiddleware = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            res.status(401).json({
+                success: false,
+                error: {
+                    code: 'UNAUTHORIZED',
+                    message: 'No token provided',
+                },
+            });
+            return;
+        }
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            res.status(401).json({
+                success: false,
+                error: {
+                    code: 'UNAUTHORIZED',
+                    message: 'Invalid token format',
+                },
+            });
+            return;
+        }
+        const payload = (0, jwt_utilities_1.verifyAccessToken)(token);
+        const user = await db_config_1.prisma.user.findUnique({
+            where: { userid: payload.userId },
+            select: { userid: true, status: true, roleId: true, email: true },
+        });
+        if (!user) {
+            res.status(401).json({
+                success: false,
+                error: {
+                    code: 'UNAUTHORIZED',
+                    message: 'User not found',
+                },
+            });
+            return;
+        }
+        req.user = {
+            userId: user.userid,
+            email: user.email,
+            roleId: user.roleId ?? undefined,
+        };
+        next();
+    }
+    catch (error) {
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            res.status(401).json({
+                success: false,
+                error: {
+                    code: 'UNAUTHORIZED',
+                    message: 'Invalid or expired token',
+                },
+            });
+            return;
+        }
+        next(error);
+    }
+};
+exports.authenticatedUserMiddleware = authenticatedUserMiddleware;

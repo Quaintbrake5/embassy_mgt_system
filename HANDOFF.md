@@ -1,9 +1,9 @@
-# HANDOFF — Embassy Management System (EMS) — Phase 1-5 Complete (Weeks 1-13)
+# HANDOFF — Embassy Management System (EMS) — Backend Phases 1-5 Complete + Frontend Complete
 
 ## Goal
-Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
+Full-stack Embassy Management System: Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend and React 19 + Vite + TypeScript frontend with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete, ✅ Phase 5 Testing (Week 12) Complete, ✅ TASK-504 Security Audit Complete, ✅ TASK-506 Compliance Audit Complete, ✅ TASK-507 Observability Complete, ✅ TASK-508 Documentation Complete
+## Current Status: ✅ Backend Complete (Phases 1-5), ✅ Frontend Complete (All Waves 1-4)
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -375,6 +375,90 @@ npm run prisma:generate
 npm run prisma:migrate -- --name <name>
 npm run prisma:studio
 ```
+
+## ✅ Frontend Complete — React 19 + Vite + TypeScript
+
+### Tech Stack
+- **Framework**: React 19 + Vite 6 + TypeScript 5.6
+- **Routing**: React Router v7
+- **HTTP**: axios (interceptors for auth: 401→refresh→retry, error toasts)
+- **Server state**: TanStack Query (caching, retries, loading/error states)
+- **CSS**: Vanilla CSS Modules — 38 `.module.css` files across components/pages
+- **Auth**: JWT in localStorage, AuthContext with JWT decode on mount
+- **Testing**: Vitest + @testing-library/react + MSW — 35 tests, 6 files, all passing
+
+### Project Structure (`frontend/`)
+```
+frontend/
+├── package.json, tsconfig.json, vite.config.ts, vitest.config.ts
+├── .env, index.html
+└── src/
+    ├── types/index.ts              # All TS types (User, AuthResponse, PaginatedResponse, etc.)
+    ├── utils/
+    │   ├── formatters.ts           # Date, currency, enum label, name joiner
+    │   └── validators.ts           # required, isEmail, minLength, isPhone, isStrongPassword
+    ├── api/                        # 18 API modules (axios client + per-domain files)
+    │   ├── client.ts               # Axios instance: Bearer token, unwrap, 401→refresh→retry, error toasts
+    │   ├── auth.api.ts             # login, register, refresh, logout, forgot/reset password, verify email
+    │   ├── users.api.ts, roles.api.ts, permissions.api.ts, profile.api.ts
+    │   ├── embassies.api.ts, serviceTypes.api.ts, serviceRequests.api.ts
+    │   ├── visa.api.ts, visaDocuments.api.ts, visaDecisions.api.ts
+    │   ├── appointments.api.ts, legalization.api.ts, emergency.api.ts
+    │   ├── diplomatic.api.ts, financial.api.ts, audit.api.ts
+    ├── context/
+    │   ├── AuthContext.tsx          # JWT decode on mount, refresh, login/logout
+    │   └── ToastContext.tsx         # useReducer + auto-dismiss
+    ├── hooks/                      # useAuth, useToast
+    ├── components/
+    │   ├── ui/                     # 14 components: LoadingSpinner, DataTable(paginated), Modal(portal),
+    │   │                           #   ConfirmDialog, FormField, PageHeader, OtpInput(6-box),
+    │   │                           #   FileUpload(drag-drop), SearchBar(300ms debounce),
+    │   │                           #   FilterDropdown, StatusBadge, Toast, ErrorBoundary, NotFoundPage
+    │   ├── layout/                 # AppLayout(sidebar+header+Outlet), Sidebar(role-aware), Header
+    │   └── guards/                 # ProtectedRoute(token check+refresh), RoleGate(permission check)
+    ├── pages/
+    │   ├── auth/                   # Login, Register, ForgotPassword, ResetPassword, VerifyEmail
+    │   ├── dashboard/              # DashboardPage (role-aware widgets)
+    │   ├── profile/                # ProfilePage (read-only + change password)
+    │   ├── visas/                  # List, Detail, Form (multi-step)
+    │   ├── appointments/           # List, Book (multi-step+OTP), Detail
+    │   ├── services/               # List, Detail, Form
+    │   ├── legalization/           # List, Detail
+    │   ├── embassies/              # List, Detail, Form
+    │   ├── users/                  # List, Detail
+    │   ├── roles/                  # List, Detail
+    │   ├── emergency/              # List, Detail
+    │   ├── diplomatic/             # PouchList, PouchDetail, ClearanceList, ClearanceDetail
+    │   ├── financial/              # TransactionList, Reconciliation, Reports
+    │   └── audit/                  # AuditLog
+    ├── App.tsx                     # Full route tree with AuthProvider > ToastProvider > QueryClient > Router
+    ├── main.tsx                    # ReactDOM.createRoot
+    └── index.css                   # CSS reset + custom properties + status color map
+```
+
+### Verification Results
+| Check | Status |
+|-------|--------|
+| TypeScript (`npx tsc --noEmit`) | ✅ Zero errors |
+| TypeScript build (`npx tsc -b`) | ✅ Zero errors |
+| Tests (`npx vitest run`) | ✅ 35/35 passing across 6 files |
+| CSS Modules | ✅ All 32 module pages have `.module.css` — 10 previously missing created |
+| Retry buttons on list error states | ✅ All list pages display styled error with retry button |
+| Stub pages implemented | ✅ ReconciliationPage and ReportsPage fully implemented with DataTable |
+
+### Frontend Commands
+```bash
+cd frontend
+npm run dev       # Dev server (port 5173, proxies /api → localhost:3010)
+npm run typecheck # Type check
+npm run build     # Production build
+npm test          # Run Vitest tests
+```
+
+### Known Gaps (Non-Blocking)
+1. **No E2E tests** — unit/integration tests only
+2. **No i18n** — all strings hardcoded in English
+3. **No dark mode** — light theme only
 
 ## Remaining Roadmap
 

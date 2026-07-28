@@ -20,3 +20,4 @@ __exportStar(require("./AuthenticationError"), exports);
 __exportStar(require("./AuthorizationError"), exports);
 __exportStar(require("./NotFoundError"), exports);
 __exportStar(require("./ConflictError"), exports);
+__exportStar(require("./RateLimitError"), exports);

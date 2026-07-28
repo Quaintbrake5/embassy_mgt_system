@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const visa_decision_controller_1 = require("../controllers/visa-decision.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const rbac_middleware_1 = require("../middleware/rbac.middleware");
+const validation_middleware_1 = require("../middleware/validation.middleware");
+const visa_decision_dto_1 = require("../dto/visa-decision.dto");
+const visa_decision_service_1 = require("../services/visa-decision.service");
+const db_config_1 = require("../config/db.config");
+const visaDecisionService = new visa_decision_service_1.VisaDecisionService(db_config_1.prisma);
+const visaDecisionController = new visa_decision_controller_1.VisaDecisionController(visaDecisionService);
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authMiddleware);
+router.post('/applications/:id/decision', (0, validation_middleware_1.validate)(visa_decision_dto_1.CreateVisaDecisionDto), (0, rbac_middleware_1.requirePermission)('visa:update'), visaDecisionController.createDecision);
+router.get('/applications/:id/decision', (0, rbac_middleware_1.requirePermission)('visa:read'), visaDecisionController.getDecision);
+router.get('/decisions/officer/me', (0, rbac_middleware_1.requirePermission)('visa:read'), visaDecisionController.getMyDecisions);
+exports.default = router;
