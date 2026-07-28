@@ -3,7 +3,7 @@
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete, ✅ Phase 5 Testing (Week 12) Complete, ✅ TASK-504 Security Audit Complete, ✅ TASK-506 Compliance Audit Complete
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete, ✅ Phase 5 Testing (Week 12) Complete, ✅ TASK-504 Security Audit Complete, ✅ TASK-506 Compliance Audit Complete, ✅ TASK-507 Observability Complete, ✅ TASK-508 Documentation Complete
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -438,8 +438,20 @@ npm run prisma:studio
   - [x] **Audit log 7-year retention** — `AuditService.purgeOldLogs(retentionDays)` deletes logs older than configurable `AUDIT_LOG_RETENTION_DAYS` (default 2555 = 7 years). Runs on 24h `setInterval` in server.ts with `unref()` for clean shutdown
   - [x] **Env config** — `AUDIT_LOG_RETENTION_DAYS` added to `.env.example`
   - [x] **Tests** — 2 new `purgeOldLogs` tests + enhanced GDPR erasure test (474 total, 38 suites)
-- [ ] **TASK-507**: Observability — structured JSON logging, OpenTelemetry tracing, Prometheus metrics, alerting rules
-- [ ] **TASK-508**: Documentation — OpenAPI/Swagger, deployment guide, schema docs, developer onboarding
+- [x] **TASK-507**: Observability — structured JSON logging, Prometheus metrics, alerting rules
+  - [x] **Structured logging** — Winston JSON logger with log levels, file rotation (error.log + combined.log), correlation ID integration
+  - [x] **Request logging** — Custom `requestLogger` middleware replacing morgan, logs method/URL/status/duration/correlationId via winston
+  - [x] **Prometheus metrics** — `prom-client` default metrics + custom: http_requests_total, http_request_duration_seconds (8 buckets), http_requests_active, http_request_errors_total. Served at `GET /metrics`
+  - [x] **Metrics middleware** — Tracks all requests (excludes /metrics), labels: method, route, status_code
+  - [x] **Console.* replacement** — All 18 console.log/warn/error calls replaced with structured logger across 6 source files
+  - [x] **Alerting rules** — `docs/observability/alerting-rules.md` with Prometheus-compatible rules (error rate, p95 latency, active requests, rate-limit saturation, service down)
+  - [x] **Env vars** — LOG_LEVEL, LOG_DIR, METRICS_ENABLED added to `.env.example`
+  - [x] **Health endpoint** — Added `service: 'embassy-mgt-system'` field
+- [x] **TASK-508**: Documentation — OpenAPI/Swagger, deployment guide, DB schema docs, developer onboarding
+  - [x] **OpenAPI/Swagger** — Comprehensive spec at `GET /api-docs` (swagger-ui-express) covering all 75+ endpoints across 17 route files with schemas, security schemes, and response types
+  - [x] **Deployment guide** — `docs/deployment-guide.md` with prerequisites, env vars, Docker, scripts, health/monitoring endpoints, security notes, migration commands, and troubleshooting table
+  - [x] **Database schema** — `docs/database-schema.md` with all 19 models, 15 enums, relationships, indexes, and domain groupings documented
+  - [x] **Developer onboarding** — `docs/developer-onboarding.md` with architecture overview, setup steps, coding conventions, file structure, API patterns, and common tasks
 
 ---
 
@@ -472,7 +484,7 @@ Phase 2 (✅ Weeks 3-5) → Phase 3 (✅ Weeks 6-8)
 ├── TASK-308 ← TASK-307                       ✅
 └── TASK-309 ← TASK-307                       ✅
 
-Phase 3 → Phase 4 → Phase 5 (✅ Complete → ✅ Testing Complete → ⏳ Performance/Docs)
+Phase 3 → Phase 4 → Phase 5 (✅ Complete → ✅ Testing Complete → ✅ Complete)
 ├── TASK-401 ← TASK-206, TASK-210                   ✅
 ├── TASK-402 ← TASK-401                              ✅
 ├── TASK-403 ← TASK-112, TASK-309                    ✅

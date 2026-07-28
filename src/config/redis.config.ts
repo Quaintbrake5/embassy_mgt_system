@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import 'dotenv/config';
+import logger from './logger.config';
 
 /**
  * Redis client singleton.
@@ -29,15 +30,15 @@ function createClient(): Redis {
   });
 
   client.on('error', (err) => {
-    console.warn('[Redis] Error:', err.message);
+    logger.warn('Redis error', { message: err.message });
   });
 
   client.on('connect', () => {
-    console.log('[Redis] Connected');
+    logger.info('Redis connected');
   });
 
   client.on('close', () => {
-    console.warn('[Redis] Connection closed');
+    logger.warn('Redis connection closed');
   });
 
   return client;

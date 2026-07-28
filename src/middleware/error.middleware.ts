@@ -1,21 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError } from '../exceptions';
+import { AppError } from '../exceptions';
 import { Prisma } from '../generated/prisma/client';
+import logger from '../config/logger.config';
 
-/**
- * Global error handling middleware
- */
 export const errorMiddleware = (
   error: Error,
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  console.error('Error:', {
+  logger.error('Unhandled error', {
     message: error.message,
     stack: error.stack,
     path: req.path,
     method: req.method,
+    correlationId: req.correlationId,
     userId: req.user?.userId,
   });
 
@@ -69,13 +68,13 @@ export const errorMiddleware = (
 function handlePrismaError(error: Prisma.PrismaClientKnownRequestError, res: Response): void {
   switch (error.code) {
     case 'P2002':
-      // Unique constraint violation
       const target = (error.meta?.target as string[])?.join(', ') || 'field';
+      logger.warn('Unique constraint violation', { target, code: error.code });
       res.status(409).json({
         success: false,
         error: {
           code: 'CONFLICT',
-          message: `${target} already exists`,
+          message: 'A record with this value already exists',
         },
       });
       break;

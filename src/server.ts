@@ -1,19 +1,23 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { redisClient } from './config/redis.config';
 import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 
-import { authMiddleware } from './middleware/auth.middleware';
 import { auditMiddleware } from './middleware/audit.middleware';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware';
+import { requestLogger } from './middleware/requestLogger.middleware';
+import { metricsMiddleware } from './middleware/metrics.middleware';
+import { register as metricsRegister } from './config/metrics.config';
 import routes from './routes';
 import { prisma } from './config/db.config';
 import { AuditService } from './services/audit.service';
+import logger from './config/logger.config';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.config';
 
 declare global {
   namespace Express {
@@ -44,19 +48,25 @@ app.use(helmet({
 
 function createRedisStore(prefix: string): RedisStore | undefined {
   if (redisClient.status === 'ready') {
-    console.log(`[RateLimit] Using Redis store (prefix: ${prefix})`);
+    logger.info('Rate-limit using Redis store', { prefix });
     return new RedisStore({
       sendCommand: (command: string, ...args: string[]) =>
         redisClient.call(command, ...args) as Promise<number>,
       prefix,
     });
   }
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  if (!isDevelopment) {
+    logger.warn('Rate-limit falling back to in-memory store because Redis is unavailable. In production, this means rate limiting is per-process, not global.', { prefix });
+  }
+
   return undefined;
 }
 
 if (redisClient.status !== 'ready') {
   redisClient.once('ready', () => {
-    console.log('[RateLimit] Redis store now available (cold start — restart to activate)');
+    logger.info('Rate-limit Redis store now available (cold start)');
   });
 }
 
@@ -96,10 +106,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-morgan.token('correlation-id', (_req: Request, res: Response) => {
-  return res.locals.correlationId || '-';
-});
-app.use(morgan(':correlation-id :remote-addr :method :url :status :res[content-length] - :response-time ms'));
+app.use(requestLogger);
+app.use(metricsMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -119,18 +127,39 @@ app.get('/health', (_req: Request, res: Response) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    service: 'embassy-mgt-system',
   });
 });
+
+if (process.env.METRICS_ENABLED !== 'false') {
+  app.get('/metrics', async (_req: Request, res: Response) => {
+    try {
+      res.setHeader('Content-Type', metricsRegister.contentType);
+      const metrics = await metricsRegister.metrics();
+      res.send(metrics);
+    } catch (err) {
+      logger.error('Failed to generate metrics', { error: err });
+      res.status(500).json({ success: false, error: { code: 'METRICS_ERROR', message: 'Failed to generate metrics' } });
+    }
+  });
+}
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({
     name: 'Embassy Management System API',
     version: '1.0.0',
     status: 'running',
-    documentation: '/api/v1',
+    documentation: '/api-docs',
     health: '/health',
   });
 });
+
+if (process.env.ENABLE_SWAGGER === 'true') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'EMS API Documentation',
+    customCss: '.swagger-ui .topbar { display: none }',
+  }));
+}
 
 app.use('/api/v1/auth', authLimiter);
 app.use(auditMiddleware);
@@ -146,10 +175,10 @@ const cleanupTimer = setInterval(async () => {
   try {
     const deleted = await auditService.purgeOldLogs(retentionDays);
     if (deleted > 0) {
-      console.log(`[Audit] Purged ${deleted} audit log(s) older than ${retentionDays} days`);
+      logger.info(`Purged ${deleted} audit log(s) older than ${retentionDays} days`);
     }
   } catch (err) {
-    console.error('[Audit] Retention cleanup failed:', err);
+    logger.error('Audit retention cleanup failed', { error: err });
   }
 }, RETENTION_INTERVAL_MS);
 

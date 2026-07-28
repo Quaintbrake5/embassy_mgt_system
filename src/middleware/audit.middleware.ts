@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db.config';
 import { AuditService } from '../services/audit.service';
+import logger from '../config/logger.config';
 
 const auditService = new AuditService(prisma);
 
@@ -14,7 +15,7 @@ export const auditMiddleware = async (
     return next();
   }
 
-  const skipPaths = ['/auth', '/health'];
+  const skipPaths = ['/health'];
   if (skipPaths.some(path => req.path.startsWith(path))) {
     return next();
   }
@@ -65,7 +66,7 @@ export const auditMiddleware = async (
         metaData,
         oldValues,
         newValues: action === 'DELETE' ? undefined : sanitizeBody(req.body),
-      }).catch(console.error);
+      }).catch((err) => logger.error('Audit log write failed', { error: err }));
     }
 
     return originalSend.call(this, body);

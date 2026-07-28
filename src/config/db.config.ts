@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import {PrismaPg} from '@prisma/adapter-pg'
 import {PrismaClient} from '../generated/prisma/client'
+import logger from './logger.config'
 const databaseUrl = process.env.DATABASE_URL
 
 if(!databaseUrl) {
@@ -16,7 +17,7 @@ const createPrismaClient = () => {
   const envAllowsInsecure = process.env.NODE_ENV === 'development';
   const useSSL = process.env.DATABASE_SSL !== 'false' && !envAllowsInsecure || databaseUrl.includes('sslmode=require');
   if (!useSSL && !envAllowsInsecure) {
-    console.warn('[DB] WARNING: Connecting to PostgreSQL without SSL. Set DATABASE_SSL=true to confirm.');
+    logger.warn('Connecting to PostgreSQL without SSL. Set DATABASE_SSL=true to confirm.');
   }
   const adapter = useSSL
     ? new PrismaPg({
