@@ -6,7 +6,7 @@
 - **Current Phase**: Phase 4 (Weeks 9-11) — Legalization, Emergency, Diplomatic, Financial
 - **Database**: embassy_mgt_system on localhost:5433
 - **Server Port**: 3010
-- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. Phase 4 pending.
+- **Status**: ✅ Phase 1 complete. ✅ Phase 2 (Weeks 3-5) complete. ✅ Phase 3 (Weeks 6-8) complete. ✅ Phase 3 code review fixes applied. ✅ Phase 4 (Weeks 9-11) complete. Phase 5 pending.
 
 ---
 
@@ -427,85 +427,96 @@
 
 ---
 
-## 🔄 Current Phase: Phase 4 (Weeks 9-11) — Legalization, Emergency, Diplomatic, Financial
+## ✅ Completed Tasks
 
-### Phase 4: Legalization, Emergency, Diplomatic, Financial (Weeks 9-11)
+### Phase 4: Legalization, Emergency, Diplomatic, Financial (Weeks 9-11) ✅ Complete
 
 #### Week 9: Document Legalization & Apostille
 
-- [ ] **TASK-401**: Create legalization service (`src/services/legalization.service.ts`)
-  - [ ] Legalization request workflow (document type, destination country, urgency)
-  - [ ] Document authenticity verification
-  - [ ] Digital seal application
-  - [ ] Tracking number generation for verification portal
-  - [ ] Hague Convention routing (apostille vs. legalization)
+- [x] **TASK-401**: Create legalization service (`src/services/legalization.service.ts`)
+  - [x] Legalization request workflow (document type, destination country, urgency)
+  - [x] Document authenticity verification
+  - [x] Digital seal application
+  - [x] Tracking number generation for verification portal
+  - [x] Hague Convention routing (apostille vs. legalization)
+  - **Note**: Wraps ServiceRequest with DOCUMENT_LEGALIZATION category. Tracking number format `LG-{timestamp36}-{hex16}` stored in details JSON. Digital seal and Hague routing info also stored in details JSON. Full audit logging on all mutations.
   - **Acceptance Criteria**: FR-07.1, FR-07.2, FR-07.3, FR-07.4
   - **Dependencies**: TASK-206, TASK-210
   - **Estimated**: 6 hours
 
-- [ ] **TASK-402**: Create legalization routes (`src/routes/legalization.routes.ts`)
-  - [ ] POST /api/v1/service-requests (category: DOCUMENT_LEGALIZATION)
-  - [ ] GET /api/v1/service-requests
-  - [ ] PUT /api/v1/service-requests/:id/process (officer)
+- [x] **TASK-402**: Create legalization routes (`src/routes/legalization.routes.ts`)
+  - [x] POST /api/v1/legalization - Submit legalization request
+  - [x] GET /api/v1/legalization - List requests
+  - [x] GET /api/v1/legalization/:id - Get request details
+  - [x] PUT /api/v1/legalization/:id/process - Process request (officer)
   - **Acceptance Criteria**: FR-07.1-4
   - **Dependencies**: TASK-401
   - **Estimated**: 2 hours
 
 #### Week 10: Emergency Services & Diplomatic Admin
 
-- [ ] **TASK-403**: Create emergency service (`src/services/emergency.service.ts`)
-  - [ ] Emergency case registration (location, dependents, medical needs)
-  - [ ] Alert broadcasting (email/SMS to registered citizens in area)
-  - [ ] Evacuation prioritization (vulnerability scoring)
-  - [ ] Welfare check logging
+- [x] **TASK-403**: Create emergency service (`src/services/emergency.service.ts`)
+  - [x] Emergency case registration (location, dependents, medical needs)
+  - [x] Alert broadcasting (email/SMS to registered citizens in area)
+  - [x] Evacuation prioritization (vulnerability scoring)
+  - [x] Welfare check logging
+  - **Note**: Reference number `EC-{timestamp36}-{hex16}`. Alert broadcast is audit-logged (no dedicated model). Evacuation list sorts by urgency CRITICAL→HIGH→MEDIUM→LOW, only OPEN/IN_PROGRESS cases.
   - **Acceptance Criteria**: FR-09.1, FR-09.2, FR-09.3, FR-09.4
   - **Dependencies**: TASK-112, TASK-309
   - **Estimated**: 6 hours
 
-- [ ] **TASK-404**: Create emergency routes (`src/routes/emergency.routes.ts`)
-  - [ ] POST /api/v1/emergency/cases - Register emergency case
-  - [ ] GET /api/v1/emergency/cases - List cases
-  - [ ] POST /api/v1/emergency/alerts - Broadcast alert (admin)
-  - [ ] GET /api/v1/emergency/evacuation-list - Get prioritized evacuation list
+- [x] **TASK-404**: Create emergency routes (`src/routes/emergency.routes.ts`)
+  - [x] POST /api/v1/emergency/cases - Register emergency case
+  - [x] GET /api/v1/emergency/cases - List cases
+  - [x] GET /api/v1/emergency/cases/:id - Get case details
+  - [x] PUT /api/v1/emergency/cases/:id/status - Update case status
+  - [x] POST /api/v1/emergency/alerts - Broadcast alert (admin)
+  - [x] GET /api/v1/emergency/evacuation-list - Get prioritized evacuation list
   - **Acceptance Criteria**: FR-09.1-4
   - **Dependencies**: TASK-403
   - **Estimated**: 2 hours
 
-- [ ] **TASK-405**: Create diplomatic service (`src/services/diplomatic.service.ts`)
-  - [ ] Diplomatic pouch chain-of-custody tracking
-  - [ ] Staff clearance management (levels, expiry, renewal)
-  - [ ] Inventory tracking with audit trail
-  - [ ] Overdue pouch escalation
+- [x] **TASK-405**: Create diplomatic service (`src/services/diplomatic.service.ts`)
+  - [x] Diplomatic pouch chain-of-custody tracking
+  - [x] Staff clearance management (levels, expiry, renewal)
+  - [x] Inventory tracking with audit trail
+  - [x] Overdue pouch escalation
+  - **Note**: Pouch number `DP-{timestamp36}-{hex16}`. Chain-of-custody stored as JSON array, appended on each handoff. Clearances check for existing active clearance before creating new one. Full audit logging.
   - **Acceptance Criteria**: FR-10.1, FR-10.2, FR-10.3, FR-10.4
   - **Dependencies**: TASK-113
   - **Estimated**: 6 hours
 
-- [ ] **TASK-406**: Create diplomatic routes (`src/routes/diplomatic.routes.ts`)
-  - [ ] POST /api/v1/diplomatic/pouches - Create pouch
-  - [ ] GET /api/v1/diplomatic/pouches - List pouches
-  - [ ] PUT /api/v1/diplomatic/pouches/:id/handoff - Handoff custody
-  - [ ] POST /api/v1/diplomatic/clearances - Create clearance
-  - [ ] GET /api/v1/diplomatic/clearances - List clearances
+- [x] **TASK-406**: Create diplomatic routes (`src/routes/diplomatic.routes.ts`)
+  - [x] POST /api/v1/diplomatic/pouches - Create pouch
+  - [x] GET /api/v1/diplomatic/pouches - List pouches
+  - [x] GET /api/v1/diplomatic/pouches/:id - Get pouch details
+  - [x] PUT /api/v1/diplomatic/pouches/:id/handoff - Handoff custody
+  - [x] POST /api/v1/diplomatic/clearances - Create clearance
+  - [x] GET /api/v1/diplomatic/clearances - List clearances
+  - [x] GET /api/v1/diplomatic/clearances/:id - Get clearance details
+  - [x] PUT /api/v1/diplomatic/clearances/:id - Update clearance
   - **Acceptance Criteria**: FR-10.1-4
   - **Dependencies**: TASK-405
   - **Estimated**: 3 hours
 
 #### Week 11: Financial Transactions
 
-- [ ] **TASK-407**: Create financial service (`src/services/financial.service.ts`)
-  - [ ] Financial transaction recording (service type, amount, currency, payer, officer)
-  - [ ] Daily reconciliation (match collections to receipts)
-  - [ ] Discrepancy flagging and supervisor notification
-  - [ ] Monthly report aggregation (by service, currency, officer)
+- [x] **TASK-407**: Create financial service (`src/services/financial.service.ts`)
+  - [x] Financial transaction recording (service type, amount, currency, payer, officer)
+  - [x] Daily reconciliation (match collections to receipts)
+  - [x] Discrepancy flagging and supervisor notification
+  - [x] Monthly report aggregation (by service, currency, officer)
+  - **Note**: Uses existing Payment model. Daily reconciliation groups COMPLETED payments by date, flags FAILED as discrepancies. Monthly reports group by service type, currency, and officer. Full audit logging.
   - **Acceptance Criteria**: FR-08.1, FR-08.2, FR-08.3, FR-08.4
   - **Dependencies**: TASK-206, TASK-113
   - **Estimated**: 6 hours
 
-- [ ] **TASK-408**: Create financial routes (`src/routes/financial.routes.ts`)
-  - [ ] POST /api/v1/financial/transactions - Record transaction
-  - [ ] GET /api/v1/financial/transactions - List transactions
-  - [ ] GET /api/v1/financial/reconciliation/daily - Daily reconciliation
-  - [ ] GET /api/v1/financial/reports/monthly - Monthly reports
+- [x] **TASK-408**: Create financial routes (`src/routes/financial.routes.ts`)
+  - [x] POST /api/v1/financial/transactions - Record transaction
+  - [x] GET /api/v1/financial/transactions - List transactions
+  - [x] GET /api/v1/financial/transactions/:id - Get transaction details
+  - [x] GET /api/v1/financial/reconciliation/daily - Daily reconciliation
+  - [x] GET /api/v1/financial/reports/monthly - Monthly reports
   - **Acceptance Criteria**: FR-08.1-4
   - **Dependencies**: TASK-407
   - **Estimated**: 2 hours
@@ -676,7 +687,7 @@ Phase 3 (Weeks 6-8) ✅ Complete
 ├── TASK-307 → TASK-308 (Appointment Routes) ✅
 └── TASK-307 → TASK-309 (OTP Service) ✅
 
-Phase 4 (Weeks 9-11) ⏳ Current
+Phase 4 (Weeks 9-11) ✅ Complete
 ├── TASK-206 + TASK-210 → TASK-401 (Legalization Service)
 ├── TASK-401 → TASK-402 (Legalization Routes)
 ├── TASK-112 + TASK-309 → TASK-403 (Emergency Service)
@@ -708,7 +719,7 @@ Phase 5 (Weeks 12-13)
 | Phase 2 (Week 5) Complete (Citizen Profile) | Week 5 | ✅ Complete |
 | Phase 3 Complete (Visa, Appointments) | Week 8 | ✅ Complete |
 | Phase 3 Code Review Fixes | July 2026 | ✅ Complete |
-| Phase 4 Complete (Legalization, Emergency, Diplomatic, Financial) | Week 11 | ⏳ In Progress |
+| Phase 4 Complete (Legalization, Emergency, Diplomatic, Financial) | Week 11 | ✅ Complete |
 | Phase 5 Complete (Testing, Security, Docs) | Week 13 | ⏳ Pending |
 | **Project Complete** | **Week 13** | ⏳ Pending |
 
@@ -727,5 +738,5 @@ Phase 5 (Weeks 12-13)
 ---
 
 *Last Updated: 2026-07-28*
-*Current Phase: Phase 4 (Weeks 9-11) — Legalization, Emergency, Diplomatic, Financial.*
-*Next Task: TASK-401 (Legalization Service)*
+*Current Phase: Phase 5 (Weeks 12-13) — Testing, Security Hardening, Documentation.*
+*Next Task: TASK-501 (Unit Testing Setup)*

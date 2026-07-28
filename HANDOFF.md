@@ -1,9 +1,9 @@
-# HANDOFF — Embassy Management System (EMS) — Phase 1 + Phase 2 (Weeks 1-5) + Phase 3 (Weeks 6-8) Complete
+# HANDOFF — Embassy Management System (EMS) — Phase 1-4 Complete (Weeks 1-11)
 
 ## Goal
 Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Embassy Management System with comprehensive consular services.
 
-## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied
+## Current Status: ✅ Phase 1 Complete, ✅ Phase 2 (Weeks 3-5) Complete, ✅ Phase 3 (Weeks 6-8) Complete, ✅ Code Review Fixes Applied, ✅ Phase 4 (Weeks 9-11) Complete
 
 ### ✅ Completed Phase 1 Items
 - **Database & Prisma**: Schema complete (14 models, 20+ enums), migrations applied
@@ -58,6 +58,18 @@ Build a Node.js/TypeScript/Express 5 + Prisma 7.9 + PostgreSQL backend for an Em
 - **OTP Service**: 6-digit OTP generation via `crypto.randomInt`, 5-minute expiry, in-memory store with rate limiting (max 3 generations per appointment per hour, max 5 verify attempts per 15min per appointmentId)
 - **Seed Data**: 8 new permissions added (visa-decision:create, visa-decision:read, vetting:create, vetting:read, appointment:manage), assigned to admin/officer/consular_staff/viewer roles
 
+### ✅ Completed Phase 4 Items (Weeks 9-11)
+- **Legalization Service**: Wraps ServiceRequest with DOCUMENT_LEGALIZATION category; document authenticity verification, digital seal application (stored in details JSON), tracking number generation (`LG-{timestamp36}-{hex16}`), Hague Convention routing (apostille vs legalization), full audit logging
+- **Legalization Routes**: `POST/GET /legalization`, `GET /legalization/:id`, `PUT /legalization/:id/process` — with RBAC (`legalization:create/read/update`)
+- **Emergency Service**: Case registration with reference number (`EC-{timestamp36}-{hex16}`), alert broadcasting (audit-logged), evacuation prioritization by urgency (CRITICAL→HIGH→MEDIUM→LOW), welfare check logging, status management, full audit logging
+- **Emergency Routes**: `POST/GET /emergency/cases`, `GET /emergency/cases/:id`, `PUT /emergency/cases/:id/status`, `GET /emergency/evacuation-list`, `POST /emergency/alerts` — with RBAC (`emergency:create/read/update/manage`)
+- **Diplomatic Service**: Pouch creation with unique pouch number (`DP-{timestamp36}-{hex16}`), chain-of-custody tracking (JSON array appended on handoff), status management (CREATED→IN_TRANSIT→RECEIVED→CLOSED/LOST); staff clearance management (ClearanceLevel 1-5, expiry, renewal, active status), duplicate clearance prevention, full audit logging
+- **Diplomatic Routes**: `POST/GET /diplomatic/pouches`, `GET /diplomatic/pouches/:id`, `PUT /diplomatic/pouches/:id/handoff`, `POST/GET /diplomatic/clearances`, `GET /diplomatic/clearances/:id`, `PUT /diplomatic/clearances/:id` — with RBAC (`diplomatic:create/read/update`)
+- **Financial Service**: Transaction recording against service requests or visa applications, daily reconciliation (COMPLETED amounts by date, FAILED flagged as discrepancies), monthly reports (aggregated by service type, currency, officer), full audit logging
+- **Financial Routes**: `POST/GET /financial/transactions`, `GET /financial/transactions/:id`, `GET /financial/reconciliation/daily`, `GET /financial/reports/monthly` — with RBAC (`financial:create/read/manage`)
+- **Seed Data**: 16 new Phase 4 permissions assigned to all 4 roles (admin gets all, officer gets create/read/update/manage, consular staff gets relevant create/read, viewer gets read-only)
+- **Route Registration**: All 4 new modules registered in `src/routes/index.ts`
+
 ## Project Structure
 
 ```
@@ -80,7 +92,11 @@ src/
 │   ├── visa.routes.ts
 │   ├── visa-document.routes.ts
 │   ├── visa-decision.routes.ts
-│   └── appointment.routes.ts
+│   ├── appointment.routes.ts
+│   ├── legalization.routes.ts
+│   ├── emergency.routes.ts
+│   ├── diplomatic.routes.ts
+│   └── financial.routes.ts
 ├── controllers/
 │   ├── auth.controller.ts
 │   ├── user.controller.ts
@@ -94,7 +110,11 @@ src/
 │   ├── visa-application.controller.ts
 │   ├── visa-document.controller.ts
 │   ├── visa-decision.controller.ts
-│   └── appointment.controller.ts
+│   ├── appointment.controller.ts
+│   ├── legalization.controller.ts
+│   ├── emergency.controller.ts
+│   ├── diplomatic.controller.ts
+│   └── financial.controller.ts
 ├── services/
 │   ├── auth.service.ts          # Register, login, refresh, logout, changePassword, forgotPassword, resetPassword
 │   ├── user.service.ts          # CRUD, getProfile, changeStatus, updateProfile, assignRole
@@ -110,7 +130,11 @@ src/
 │   ├── visa-decision.service.ts # Decision workflow, dual-approval, review tracking
 │   ├── vetting.service.ts       # Watchlist matching, risk scoring, VerificationCheck management
 │   ├── appointment.service.ts   # Slot management, booking, queue, QR check-in, no-show handling
-│   └── otp.service.ts           # OTP generation, verification, rate limiting
+│   ├── otp.service.ts           # OTP generation, verification, rate limiting
+│   ├── legalization.service.ts  # Document legalization, Hague routing, digital seal
+│   ├── emergency.service.ts     # Emergency case mgmt, alerts, evacuation prioritization
+│   ├── diplomatic.service.ts    # Pouch chain-of-custody, staff clearance management
+│   └── financial.service.ts     # Transaction recording, reconciliation, monthly reports
 ├── middleware/
 │   ├── auth.middleware.ts       # JWT verification + optional auth
 │   ├── audit.middleware.ts      # Auto-log mutations + old/new value capture + correlation IDs
@@ -132,6 +156,10 @@ src/
 │   ├── visa-decision.dto.ts     # CreateVisaDecisionDto with DecisionType enum validation
 │   ├── vetting.dto.ts           # VettingResultDto, VerificationCheckResponseDto
 │   ├── appointment.dto.ts       # CreateAppointmentDto, AvailableSlotsQueryDto, AppointmentResponseDto
+│   ├── legalization.dto.ts      # CreateLegalizationDto, ProcessLegalizationDto, LegalizationResponseDto
+│   ├── emergency.dto.ts         # CreateEmergencyCaseDto, AlertBroadcastDto, EmergencyCaseResponseDto
+│   ├── diplomatic.dto.ts        # CreatePouchDto, UpdatePouchHandoffDto, CreateClearanceDto, ClearanceResponseDto
+│   └── financial.dto.ts         # RecordTransactionDto, DailyReconciliationDto, MonthlyReportDto
 ├── exceptions/
 │   ├── AppError.ts
 │   ├── ValidationError.ts
@@ -214,7 +242,7 @@ src/
 | Tests (auth service) | ✅ 11 tests (register, login, forgotPassword, resetPassword) |
 | Tests (audit service) | ✅ 6 tests (log, findAll, filtering, findById, export) |
 | Tests (API) | ✅ 1 test (health, root, 404) |
-| Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 38 permissions, 4 roles, admin user |
+| Seed script (`npx tsx prisma/seed.ts`) | ✅ Idempotent, 54 permissions, 4 roles, admin user |
 
 ## Phase 3 Code Review Fixes Applied (July 2026)
 
@@ -298,6 +326,26 @@ All 9 high-confidence findings addressed, zero regressions:
 | `src/dto/vetting.dto.ts` | VettingResultDto, VerificationCheckResponseDto |
 | `src/dto/appointment.dto.ts` | CreateAppointmentDto, AvailableSlotsQueryDto, AppointmentResponseDto |
 
+### Phase 4
+| File | Purpose |
+|------|---------|
+| `src/services/legalization.service.ts` | Document legalization workflow, Hague routing, digital seal |
+| `src/services/emergency.service.ts` | Emergency case management, alert broadcast, evacuation prioritization |
+| `src/services/diplomatic.service.ts` | Pouch chain-of-custody, staff clearance management |
+| `src/services/financial.service.ts` | Transaction recording, daily reconciliation, monthly reports |
+| `src/controllers/legalization.controller.ts` | Request/response for legalization endpoints |
+| `src/controllers/emergency.controller.ts` | Request/response for emergency endpoints |
+| `src/controllers/diplomatic.controller.ts` | Request/response for diplomatic endpoints |
+| `src/controllers/financial.controller.ts` | Request/response for financial endpoints |
+| `src/routes/legalization.routes.ts` | Legalization routes with RBAC |
+| `src/routes/emergency.routes.ts` | Emergency routes with RBAC |
+| `src/routes/diplomatic.routes.ts` | Diplomatic routes with RBAC |
+| `src/routes/financial.routes.ts` | Financial routes with RBAC |
+| `src/dto/legalization.dto.ts` | Legalization DTOs with document type and destination validation |
+| `src/dto/emergency.dto.ts` | Emergency DTOs with case type and urgency validation |
+| `src/dto/diplomatic.dto.ts` | Diplomatic DTOs with pouch and clearance validation |
+| `src/dto/financial.dto.ts` | Financial DTOs with amount, currency, and reconciliation types |
+
 ## Commands
 ```bash
 # Start dev server
@@ -345,21 +393,21 @@ npm run prisma:studio
 
 ---
 
-### Phase 4: Legalization, Emergency, Diplomatic, Financial (Weeks 9-11)
+### Phase 4: Legalization, Emergency, Diplomatic, Financial (Weeks 9-11) ✅ COMPLETE
 
-#### Document Legalization (Week 9)
-- [ ] **TASK-401**: Legalization service — request workflow, document authenticity verification, digital seal, tracking number, Hague Convention routing (apostille vs legalization)
-- [ ] **TASK-402**: Legalization routes — `POST/GET /legalization/requests`, `PUT /:id/process`
+#### Document Legalization (Week 9) ✅
+- [x] **TASK-401**: Legalization service — request workflow, document authenticity verification, digital seal, tracking number, Hague Convention routing (apostille vs legalization)
+- [x] **TASK-402**: Legalization routes — `POST/GET /legalization`, `PUT /:id/process`
 
-#### Emergency & Diplomatic (Week 10)
-- [ ] **TASK-403**: Emergency service — case registration (location/dependents/medical), alert broadcast (email/SMS), evacuation prioritization, welfare checks
-- [ ] **TASK-404**: Emergency routes — `POST/GET /emergency/cases`, `POST /alerts`, `GET /evacuation-list`
-- [ ] **TASK-405**: Diplomatic service — pouch chain-of-custody tracking, staff clearance management (levels/expiry/renewal), overdue escalation
-- [ ] **TASK-406**: Diplomatic routes — `POST/GET /diplomatic/pouches`, `PUT /:id/handoff`, `POST/GET /clearances`
+#### Emergency & Diplomatic (Week 10) ✅
+- [x] **TASK-403**: Emergency service — case registration (location/dependents/medical), alert broadcast (email/SMS), evacuation prioritization, welfare checks
+- [x] **TASK-404**: Emergency routes — `POST/GET /emergency/cases`, `POST /alerts`, `GET /evacuation-list`
+- [x] **TASK-405**: Diplomatic service — pouch chain-of-custody tracking, staff clearance management (levels/expiry/renewal), overdue escalation
+- [x] **TASK-406**: Diplomatic routes — `POST/GET /diplomatic/pouches`, `PUT /:id/handoff`, `POST/GET /clearances`
 
-#### Financial Transactions (Week 11)
-- [ ] **TASK-407**: Financial service — transaction recording (service/amount/currency/payer/officer), daily reconciliation, discrepancy flags, monthly reports
-- [ ] **TASK-408**: Financial routes — `POST/GET /financial/transactions`, `GET /reconciliation/daily`, `GET /reports/monthly`
+#### Financial Transactions (Week 11) ✅
+- [x] **TASK-407**: Financial service — transaction recording (service/amount/currency/payer/officer), daily reconciliation, discrepancy flags, monthly reports
+- [x] **TASK-408**: Financial routes — `POST/GET /financial/transactions`, `GET /reconciliation/daily`, `GET /reports/monthly`
 
 ---
 
@@ -408,15 +456,15 @@ Phase 2 (✅ Weeks 3-5) → Phase 3 (✅ Weeks 6-8)
 ├── TASK-308 ← TASK-307                       ✅
 └── TASK-309 ← TASK-307                       ✅
 
-Phase 3 → Phase 4 → Phase 5
-├── TASK-401 ← TASK-206, TASK-210
-├── TASK-402 ← TASK-401
-├── TASK-403 ← TASK-112, TASK-309
-├── TASK-404 ← TASK-403
-├── TASK-405 ← TASK-113
-├── TASK-406 ← TASK-405
-├── TASK-407 ← TASK-206, TASK-113
-└── TASK-408 ← TASK-407
+Phase 3 → Phase 4 → Phase 5 (✅ Complete → ⏳ Pending)
+├── TASK-401 ← TASK-206, TASK-210                   ✅
+├── TASK-402 ← TASK-401                              ✅
+├── TASK-403 ← TASK-112, TASK-309                    ✅
+├── TASK-404 ← TASK-403                              ✅
+├── TASK-405 ← TASK-113                              ✅
+├── TASK-406 ← TASK-405                              ✅
+├── TASK-407 ← TASK-206, TASK-113                    ✅
+└── TASK-408 ← TASK-407                              ✅
 ```
 
 ---

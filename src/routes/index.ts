@@ -12,6 +12,10 @@ import visaRoutes from './visa.routes';
 import visaDocumentRoutes from './visa-document.routes';
 import visaDecisionRoutes from './visa-decision.routes';
 import appointmentRoutes from './appointment.routes';
+import legalizationRoutes from './legalization.routes';
+import emergencyRoutes from './emergency.routes';
+import diplomaticRoutes from './diplomatic.routes';
+import financialRoutes from './financial.routes';
 
 const router = Router();
 
@@ -28,5 +32,9 @@ router.use('/visa', visaRoutes);
 router.use('/visa/documents', visaDocumentRoutes);
 router.use('/visa/decisions', visaDecisionRoutes);
 router.use('/appointments', appointmentRoutes);
+router.use('/legalization', legalizationRoutes);
+router.use('/emergency', emergencyRoutes);
+router.use('/diplomatic', diplomaticRoutes);
+router.use('/financial', financialRoutes);
 
 export default router;

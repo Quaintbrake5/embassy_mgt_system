@@ -46,6 +46,20 @@ const PERMISSIONS = [
   { name: 'Vetting Create', slug: 'vetting:create', description: 'Run vetting checks' },
   { name: 'Vetting Read', slug: 'vetting:read', description: 'View vetting results' },
   { name: 'Appointment Manage', slug: 'appointment:manage', description: 'Manage appointment queue' },
+  { name: 'Legalization Create', slug: 'legalization:create', description: 'Submit legalization requests' },
+  { name: 'Legalization Read', slug: 'legalization:read', description: 'View legalization requests' },
+  { name: 'Legalization Update', slug: 'legalization:update', description: 'Process legalization requests' },
+  { name: 'Emergency Create', slug: 'emergency:create', description: 'Register emergency cases' },
+  { name: 'Emergency Read', slug: 'emergency:read', description: 'View emergency cases' },
+  { name: 'Emergency Update', slug: 'emergency:update', description: 'Update emergency cases' },
+  { name: 'Emergency Manage', slug: 'emergency:manage', description: 'Manage emergency alerts' },
+  { name: 'Diplomatic Create', slug: 'diplomatic:create', description: 'Create diplomatic pouches and clearances' },
+  { name: 'Diplomatic Read', slug: 'diplomatic:read', description: 'View diplomatic records' },
+  { name: 'Diplomatic Update', slug: 'diplomatic:update', description: 'Update diplomatic records' },
+  { name: 'Diplomatic Manage', slug: 'diplomatic:manage', description: 'Manage diplomatic administration' },
+  { name: 'Financial Create', slug: 'financial:create', description: 'Record financial transactions' },
+  { name: 'Financial Read', slug: 'financial:read', description: 'View financial records' },
+  { name: 'Financial Manage', slug: 'financial:manage', description: 'Manage financial reconciliation and reports' },
 ];
 
 const ROLES = [
@@ -66,6 +80,10 @@ const ROLES = [
       'vetting:create', 'vetting:read',
       'appointment:read', 'appointment:update', 'appointment:manage',
       'audit:read', 'profile:read',
+      'legalization:create', 'legalization:read', 'legalization:update',
+      'emergency:create', 'emergency:read', 'emergency:update', 'emergency:manage',
+      'diplomatic:create', 'diplomatic:read', 'diplomatic:update',
+      'financial:create', 'financial:read', 'financial:manage',
     ],
   },
   {
@@ -77,6 +95,10 @@ const ROLES = [
       'service-type:read', 'service-request:create', 'service-request:read',
       'visa:create', 'visa:read', 'visa-decision:read', 'vetting:read',
       'appointment:create', 'appointment:read',
+      'legalization:create', 'legalization:read',
+      'emergency:create', 'emergency:read',
+      'diplomatic:read',
+      'financial:read',
     ],
   },
   {
@@ -87,6 +109,10 @@ const ROLES = [
       'user:read', 'embassy:read', 'department:read',
       'service-type:read', 'service-request:read', 'visa:read', 'visa-decision:read',
       'appointment:read', 'audit:read', 'profile:read',
+      'legalization:read',
+      'emergency:read',
+      'diplomatic:read',
+      'financial:read',
     ],
   },
 ];
@@ -162,10 +188,10 @@ async function main() {
         roleId: adminRole?.id,
       },
     });
-    console.log(`  Created admin user: admin@embassy.gov`);
-    console.log(`  ⚠ Admin initial password: ${tempPassword} (change on first login)`);
+    console.log(`Created admin user: admin@embassy.gov`);
+    console.log(`Admin initial password: ${tempPassword} (change on first login)`);
   } else {
-    console.log('  Admin user already exists');
+    console.log('Admin user already exists');
   }
 
   console.log('Seeding complete.');
