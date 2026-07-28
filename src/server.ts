@@ -12,6 +12,8 @@ import { authMiddleware } from './middleware/auth.middleware';
 import { auditMiddleware } from './middleware/audit.middleware';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware';
 import routes from './routes';
+import { prisma } from './config/db.config';
+import { AuditService } from './services/audit.service';
 
 declare global {
   namespace Express {
@@ -136,5 +138,23 @@ app.use('/api/v1', routes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
+
+const RETENTION_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const retentionDays = parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '2555', 10);
+const auditService = new AuditService(prisma);
+const cleanupTimer = setInterval(async () => {
+  try {
+    const deleted = await auditService.purgeOldLogs(retentionDays);
+    if (deleted > 0) {
+      console.log(`[Audit] Purged ${deleted} audit log(s) older than ${retentionDays} days`);
+    }
+  } catch (err) {
+    console.error('[Audit] Retention cleanup failed:', err);
+  }
+}, RETENTION_INTERVAL_MS);
+
+if (process.env.NODE_ENV !== 'test') {
+  cleanupTimer.unref();
+}
 
 export default app;

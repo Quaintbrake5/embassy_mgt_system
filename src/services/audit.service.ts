@@ -2,6 +2,7 @@ import { PrismaClient } from '../generated/prisma/client';
 import { NotFoundError } from '../exceptions';
 
 const EXPORT_MAX_LIMIT = 10000;
+const DEFAULT_RETENTION_DAYS = 2555;
 
 export interface IAuditService {
   log(data: {
@@ -137,6 +138,17 @@ export class AuditService implements IAuditService {
     }
 
     return log;
+  }
+
+  async purgeOldLogs(retentionDays: number = DEFAULT_RETENTION_DAYS): Promise<number> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+
+    const result = await this.prisma.auditLog.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    });
+
+    return result.count;
   }
 
   async exportLogs(params: {

@@ -82,14 +82,33 @@ describe('ProfileService', () => {
     });
   });
 
-  describe('deleteProfile (GDPR anonymization)', () => {
-    it('should anonymize and audit', async () => {
+describe('deleteProfile (GDPR anonymization)', () => {
+    it('should anonymize profile, user record, and audit', async () => {
       mockPrisma.profile.update.mockResolvedValue(
         createMockProfile({ gender: 'PREFER_NOT_TO_SAY', dateOfBirth: null, city: null, country: null, postalCode: null, avatar: null, bio: null, state: null })
       );
+      mockPrisma.user.update.mockResolvedValue({
+        userid: 'user-1',
+        firstName: 'Anonymous',
+        lastName: 'User',
+        email: 'deleted-user-1@anonymous.ems',
+        phone: null,
+        passwordHash: '',
+        status: 'INACTIVE',
+      });
       await profileService.deleteProfile('user-1', 'user-1');
       expect(mockPrisma.profile.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ gender: 'PREFER_NOT_TO_SAY' }) })
+      );
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userid: 'user-1' },
+          data: expect.objectContaining({
+            firstName: 'Anonymous',
+            lastName: 'User',
+            status: 'INACTIVE',
+          }),
+        })
       );
       expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ action: 'ANONYMIZE', entity: 'Profile' }) })

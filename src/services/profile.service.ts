@@ -124,6 +124,19 @@ export class ProfileService implements IProfileService {
           postalCode: null,
         },
       });
+
+      const anonEmail = `deleted-${userId}@anonymous.ems`;
+      await this.prisma.user.update({
+        where: { userid: userId },
+        data: {
+          firstName: 'Anonymous',
+          lastName: 'User',
+          email: anonEmail,
+          phone: null,
+          passwordHash: '',
+          status: 'INACTIVE' as any,
+        },
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new NotFoundError('Profile not found');
@@ -138,7 +151,7 @@ export class ProfileService implements IProfileService {
           action: 'ANONYMIZE',
           entity: 'Profile',
           entityId: userId,
-          description: `GDPR anonymization of profile for user ${userId}`,
+          description: `GDPR anonymization of profile and user record for user ${userId}`,
         },
       });
     }

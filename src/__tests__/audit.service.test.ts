@@ -5,6 +5,7 @@ const mockPrisma = {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    deleteMany: jest.fn(),
     count: jest.fn(),
   },
 };
@@ -125,6 +126,29 @@ describe('AuditService', () => {
       expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
         expect.not.objectContaining({ skip: expect.any(Number), take: expect.any(Number) })
       );
+    });
+  });
+
+  describe('purgeOldLogs', () => {
+    it('should delete logs older than default 7-year retention', async () => {
+      mockPrisma.auditLog.deleteMany.mockResolvedValue({ count: 5 });
+
+      const deleted = await auditService.purgeOldLogs();
+
+      expect(deleted).toBe(5);
+      expect(mockPrisma.auditLog.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ createdAt: expect.objectContaining({ lt: expect.any(Date) }) }),
+        })
+      );
+    });
+
+    it('should honor custom retention days', async () => {
+      mockPrisma.auditLog.deleteMany.mockResolvedValue({ count: 0 });
+
+      await auditService.purgeOldLogs(90);
+
+      expect(mockPrisma.auditLog.deleteMany).toHaveBeenCalled();
     });
   });
 });

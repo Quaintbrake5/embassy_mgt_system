@@ -44,6 +44,7 @@ const mockPrisma: Record<string, any> = {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     create: jest.fn(),
+    deleteMany: jest.fn(),
     count: jest.fn(),
   },
   profile: {
