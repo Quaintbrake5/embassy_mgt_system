@@ -62,6 +62,17 @@ export class AppointmentController {
     }
   };
 
+  findById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      const id = req.params.id as string;
+      const appointment = await this.appointmentService.findById(id, userId);
+      res.json({ success: true, data: appointment });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   cancel = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.userId;

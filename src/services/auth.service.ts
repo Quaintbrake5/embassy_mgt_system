@@ -5,6 +5,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/
 import { hashPassword, comparePassword } from '../utils/bcrypt.utilities';
 import { generateToken, hashToken } from '../utils/crypto.utilities';
 import Redis from 'ioredis';
+import logger from '../config/logger.config';
 
 interface ResetTokenEntry {
   userId: string;
@@ -121,6 +122,10 @@ export class AuthService implements IAuthService {
         metaData: { email: user.email },
       },
     });
+
+    this.sendVerification(user.userid).catch((err) =>
+      logger.error('Failed to send verification email', { err, userId: user.userid })
+    );
 
     return {
       accessToken,
@@ -457,6 +462,14 @@ export class AuthService implements IAuthService {
         description: 'Verification email sent',
       },
     })
+
+    if (process.env['NODE_ENV'] !== 'production') {
+      const frontendUrl = process.env['FRONTEND_URL'] || 'http://localhost:5173';
+      logger.info('============================================');
+      logger.info(`EMAIL VERIFICATION URL (dev only):`);
+      logger.info(`${frontendUrl}/verify-email?token=${token}`);
+      logger.info('============================================');
+    }
 
     return { message: 'Verification email sent' }
   }

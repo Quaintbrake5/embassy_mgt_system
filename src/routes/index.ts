@@ -16,6 +16,7 @@ import legalizationRoutes from './legalization.routes';
 import emergencyRoutes from './emergency.routes';
 import diplomaticRoutes from './diplomatic.routes';
 import financialRoutes from './financial.routes';
+import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/legalization', legalizationRoutes);
 router.use('/emergency', emergencyRoutes);
 router.use('/diplomatic', diplomaticRoutes);
 router.use('/financial', financialRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

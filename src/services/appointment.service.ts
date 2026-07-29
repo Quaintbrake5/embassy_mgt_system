@@ -146,6 +146,15 @@ export class AppointmentService implements IAppointmentService {
     return this.toResponse(appointment);
   }
 
+  async findById(appointmentId: string, userId?: string): Promise<AppointmentResponseDto> {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: AppointmentService.APPOINTMENT_INCLUDE,
+    });
+    if (!appointment) throw new NotFoundError('Appointment not found');
+    return this.toResponse(appointment);
+  }
+
   async findMyAppointments(userId: string, page?: number, limit?: number): Promise<PaginatedAppointmentsDto> {
     const currentPage = page || 1;
     const currentLimit = limit || 10;
